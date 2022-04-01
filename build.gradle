@@ -1,0 +1,74 @@
+// Copyright (C) 2022 Mandiant, Inc. All Rights Reserved.
+// Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at: [package root]/LICENSE.txt
+// Unless required by applicable law or agreed to in writing, software distributed under the License
+//  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and limitations under the License.
+
+// Builds a Ghidra Extension for a given Ghidra installation.
+//
+// An absolute path to the Ghidra installation directory must be supplied either by setting the 
+// GHIDRA_INSTALL_DIR environment variable or Gradle project property:
+//
+//     > export GHIDRA_INSTALL_DIR=<Absolute path to Ghidra> 
+//     > gradle
+//
+//         or
+//
+//     > gradle -PGHIDRA_INSTALL_DIR=<Absolute path to Ghidra>
+//
+// Gradle should be invoked from the directory of the project to build.  Please see the
+// application.gradle.version property in <GHIDRA_INSTALL_DIR>/Ghidra/application.properties
+// for the correction version of Gradle to use for the Ghidra installation you specify.
+
+def javaHome
+def pythonBin
+
+if (project.hasProperty("PYTHON_BIN")) {
+	pythonBin = project.getProperty("PYTHON_BIN")
+}
+else {
+	pythonBin = "python"
+}
+
+// we need to install Jep; this requires C++ build tools on Windows (see README); we need to define
+// the env variable "JAVA_HOME" containing absolute path to Java JDK configured for Ghidra
+task installJep(type: Exec) {
+    environment "JAVA_HOME", System.getProperty("java.home")
+    commandLine pythonBin, '-m', 'pip', 'install', 'jep'
+}
+
+// we need to copy the Jep native binaries built in installJep to our extension directory; we use a small
+// utility script written in Python
+task copyJepNativeBinaries(type: Exec) {
+    dependsOn installJep
+    workingDir "${projectDir}"
+    commandLine pythonBin, "util${File.separator}configure_jep_native_binaries.py"
+}
+
+// make all tasks not matching copyJepNativeBinaries or installJep depend on copyJepNativeBinaries; mostly
+// used to ensure our tasks run before Ghidra buildExtension task
+tasks.matching { it.name != 'copyJepNativeBinaries' && it.name != 'installJep' }.all { Task task ->
+    task.dependsOn copyJepNativeBinaries
+}
+
+// from here we use the standard Gradle build provided by Ghidra framework
+
+//----------------------START "DO NOT MODIFY" SECTION------------------------------
+def ghidraInstallDir
+
+if (System.env.GHIDRA_INSTALL_DIR) {
+    ghidraInstallDir = System.env.GHIDRA_INSTALL_DIR
+}
+else if (project.hasProperty("GHIDRA_INSTALL_DIR")) {
+    ghidraInstallDir = project.getProperty("GHIDRA_INSTALL_DIR")
+}
+
+if (ghidraInstallDir) {
+    apply from: new File(ghidraInstallDir).getCanonicalPath() + "/support/buildExtension.gradle"
+}
+else {
+    throw new GradleException("GHIDRA_INSTALL_DIR is not defined!")
+}
+//----------------------END "DO NOT MODIFY" SECTION-------------------------------
