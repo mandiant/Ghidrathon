@@ -79,7 +79,7 @@ Tool | Version |Source |
 |---|---|---|
 | Ghidra | `>= 10.1` | https://ghidra-sre.org |
 | Jep | `>= 4.0` | https://github.com/ninia/jep |
-| Gradle | `>= 6.0` | https://gradle.org/releases |
+| Gradle | `>= 6.8` | https://gradle.org/releases |
 | Python | `>= 3.7` | https://www.python.org/downloads |
 
 ## Python Virtual Environments
