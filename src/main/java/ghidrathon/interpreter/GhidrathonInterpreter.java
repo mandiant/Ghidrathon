@@ -85,36 +85,40 @@ public class GhidrathonInterpreter {
 	 * 
 	 * User must build and include native Jep library in the appropriate OS folder prior to
 	 * building this extension.
-	 * Requires os/win64/libjep.dll for Windows
-	 * Requires os/linux64/libjep.so for Linux
-	 * 
+	 * Requires os/win_<arch>/jep.dll for Windows
+	 * Requires os/mac_<arch>/jep.so for macOS
+	 * Requires os/linux_<arch>/libjep.so for Linux
+	 *
 	 * @throws JepException
 	 * @throws FileNotFoundException
 	 */
-	private void setJepNativeBinaryPath() throws JepException, FileNotFoundException {
-		
-		File nativeJep;
-		
-		try {
-			
-			nativeJep = Application.getOSFile(extname, "libjep.so");
-			
-		} catch (FileNotFoundException e) {
-			
-			// whoops try Windows
-			nativeJep = Application.getOSFile(extname, "jep.dll");
-
+	private void setJepNativeBinaryPath() throws JepException, FileNotFoundException
+	{
+		String[] nativeJepFileNames = {
+			"jep.dll",
+			"jep.so",
+			"libjep.so",
+		};
+		File nativeJep = null;
+		for (String nativeJepCandidate : nativeJepFileNames) {
+			try {
+				nativeJep = Application.getOSFile(extname, nativeJepCandidate);
+				break;
+			} catch (FileNotFoundException e) {
+				continue;
+			}
 		}
-		
+
+		if (nativeJep == null) {
+			throw new RuntimeException("Could not load any of following Jep native libraries: " + String.join(", ", nativeJepFileNames));
+		}
 		try {
-			
 			MainInterpreter.setJepLibraryPath(nativeJep.getAbsolutePath());
-			
 		} catch (IllegalStateException e) {
 			// library path has already been set elsewhere, we expect this to happen as Jep Maininterpreter
 			// thread exists forever once it's created
 		}
-		
+
 	}
 
 	
