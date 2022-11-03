@@ -37,9 +37,13 @@ public class GhidrathonScriptProvider extends GhidraScriptProvider {
 	public GhidraScript getScriptInstance(ResourceFile sourceFile, PrintWriter writer)
 			throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 
-		Class<?> clazz = Class.forName(GhidrathonScript.class.getName());
-		GhidraScript script = (GhidraScript) clazz.newInstance();
-		
+		GhidraScript script;
+		try {
+			script = GhidrathonScript.class.getDeclaredConstructor().newInstance();
+		} catch (ReflectiveOperationException reflectiveOperationException) {
+			throw new InstantiationException(reflectiveOperationException.getMessage());
+		}
+
 		script.setSourceFile(sourceFile);
 		
 		return script;
