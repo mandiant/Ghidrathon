@@ -16,6 +16,7 @@ import generic.jar.ResourceFile;
 
 import ghidra.app.script.GhidraScript;
 import ghidra.app.script.GhidraScriptProvider;
+import ghidra.app.script.GhidraScriptLoadException;
 
 public class GhidrathonScriptProvider extends GhidraScriptProvider {
 
@@ -35,19 +36,24 @@ public class GhidrathonScriptProvider extends GhidraScriptProvider {
 
 	@Override
 	public GhidraScript getScriptInstance(ResourceFile sourceFile, PrintWriter writer)
-			throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+			throws GhidraScriptLoadException {
+		try{
+			Class<?> clazz = Class.forName(GhidrathonScript.class.getName());
+			GhidraScript script = (GhidraScript) clazz.newInstance();
+			script.setSourceFile(sourceFile);
 
-		GhidraScript script;
-		try {
-			script = GhidrathonScript.class.getDeclaredConstructor().newInstance();
-		} catch (ReflectiveOperationException reflectiveOperationException) {
-			throw new InstantiationException(reflectiveOperationException.getMessage());
+			return script;
 		}
-
-		script.setSourceFile(sourceFile);
-		
-		return script;
-		
+		catch (InstantiationException e) {
+			throw new GhidraScriptLoadException("Unable to instantiate: " + e.getMessage(), e);
+		}
+		catch (ClassNotFoundException e) {
+			throw new GhidraScriptLoadException("Unable to locate class: " + e.getMessage(), e);
+		}
+		catch (IllegalAccessException e) {
+			throw new GhidraScriptLoadException(
+				"The class or its default constructor is not accessible: " + e.getMessage(), e);
+		}
 	}
 
 	@Override
