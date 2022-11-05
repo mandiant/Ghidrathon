@@ -38,21 +38,14 @@ public class GhidrathonScriptProvider extends GhidraScriptProvider {
 	public GhidraScript getScriptInstance(ResourceFile sourceFile, PrintWriter writer)
 			throws GhidraScriptLoadException {
 		try{
-			Class<?> clazz = Class.forName(GhidrathonScript.class.getName());
-			GhidraScript script = (GhidraScript) clazz.newInstance();
+			GhidraScript script;
+			script = GhidrathonScript.class.getDeclaredConstructor().newInstance();
 			script.setSourceFile(sourceFile);
 
 			return script;
 		}
-		catch (InstantiationException e) {
+		catch (ReflectiveOperationException e) {
 			throw new GhidraScriptLoadException("Unable to instantiate: " + e.getMessage(), e);
-		}
-		catch (ClassNotFoundException e) {
-			throw new GhidraScriptLoadException("Unable to locate class: " + e.getMessage(), e);
-		}
-		catch (IllegalAccessException e) {
-			throw new GhidraScriptLoadException(
-				"The class or its default constructor is not accessible: " + e.getMessage(), e);
 		}
 	}
 
