@@ -77,6 +77,7 @@ public class GhidrathonInterpreter {
 		// to help us further configure the Python environment
 		setJepEval();
 		setJepRunScript();
+		setJepIsInstanceIsSubclass();
 
 	}
 	
@@ -152,7 +153,24 @@ public class GhidrathonInterpreter {
 		jep.runScript(file.getAbsolutePath());
 		
 	}
+
+	/**
+	 * Configure isinstance and issubclass proxy functions in Python land.
+	 * 
+	 * We use Python to run Python scripts because it gives us better access to tracebacks.
+	 * Requires data/python/jepisinstance.py.
+	 * 
+	 * @throws JepException
+	 * @throws FileNotFoundException
+	 */
+	private void setJepIsInstanceIsSubclass() throws JepException, FileNotFoundException {
 		
+		ResourceFile file = Application.getModuleDataFile(extname, "python/jepisinstance.py");
+		
+		jep.runScript(file.getAbsolutePath());
+		
+	}
+
 	/**
 	 * Configure GhidraState.
 	 * 
@@ -169,6 +187,9 @@ public class GhidrathonInterpreter {
 			return;
 		}
 
+		ResourceFile file = Application.getModuleDataFile(extname, "python/jepbuiltins.py");
+		jep.runScript(file.getAbsolutePath());
+
 		// inject GhidraScript public/private fields e.g. currentAddress into Python
 		// see https://github.com/NationalSecurityAgency/ghidra/blob/master/Ghidra/Features/Python/src/main/java/ghidra/python/GhidraPythonInterpreter.java#L341-L377
 		for (Class<?> scriptClass = script.getClass(); scriptClass != Object.class; scriptClass =
@@ -178,7 +199,7 @@ public class GhidrathonInterpreter {
 					Modifier.isProtected(field.getModifiers())) {
 					try {
 						field.setAccessible(true);
-						jep.set(field.getName(), field.get(script));
+						jep.invoke("jep_set_builtin", field.getName(), field.get(script));
 					}
 					catch (IllegalAccessException iae) {
 						throw new JepException("Unexpected security manager being used!");
@@ -189,7 +210,7 @@ public class GhidrathonInterpreter {
 
 		if (!scriptMethodsInjected) {
 			// inject GhidraScript methods into Python
-			ResourceFile file = Application.getModuleDataFile(extname, "python/jepinject.py");
+			file = Application.getModuleDataFile(extname, "python/jepinject.py");
 			jep.set("__ghidra_script__", script);
 			jep.runScript(file.getAbsolutePath());
 		}
