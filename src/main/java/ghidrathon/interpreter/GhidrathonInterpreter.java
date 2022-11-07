@@ -414,6 +414,9 @@ public class GhidrathonInterpreter {
 		try {
 			
 			ResourceFile file = Application.getModuleDataFile(extname, "python/jepwelcome.py");
+
+			jep.set("GhidraVersion", Application.getApplicationVersion());
+
 			jep.runScript(file.getAbsolutePath());
 			
 		} catch (JepException | FileNotFoundException e) {

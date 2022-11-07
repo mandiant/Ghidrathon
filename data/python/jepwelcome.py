@@ -23,7 +23,7 @@ message = """
  | |__| | | | | | (_| | | | (_| | |_| | | | (_) | | | |
   \_____|_| |_|_|\__,_|_|  \__,_|\__|_| |_|\___/|_| |_|
                                                        
-Python %s Interpreter for Ghidra. Developed by FLARE.
+Python %s Interpreter for Ghidra %s. Developed by FLARE.
 """
 
 
@@ -32,4 +32,8 @@ def format_version():
     return "%d.%d.%d" % sys.version_info[:3]
 
 
-print(message % format_version())
+# Assume GhidraVersion passed from Java to Python before execution
+
+print(message % (format_version(), GhidraVersion))
+
+del GhidraVersion
