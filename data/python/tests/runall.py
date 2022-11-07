@@ -20,7 +20,6 @@ import pathlib
 
 def main():
     loader = unittest.TestLoader()
-    result = unittest.TestResult()
 
     directory = str(pathlib.Path(__file__).resolve().parent)
 
