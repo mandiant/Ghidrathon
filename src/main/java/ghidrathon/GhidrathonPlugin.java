@@ -50,7 +50,7 @@ public class GhidrathonPlugin extends ProgramPlugin implements InterpreterConnec
 	
 	public GhidrathonPlugin(PluginTool tool) {
 		
-		super(tool, true, true, true);
+		super(tool);
 		
 	}
 
