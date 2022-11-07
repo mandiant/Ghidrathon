@@ -36,3 +36,6 @@ dist/**
 *.exe
 .gradle/**
 /bin/
+
+# Python ignore
+**/__pycache__/**

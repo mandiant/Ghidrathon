@@ -25,10 +25,10 @@ def jep_runscript(path):
 
     # set __file__ so child script can locate itself
     # TODO: do we need to set others?
-    __file__ = path
+    additional_globals = {"__file__": path}
 
     try:
-        exec(compile(source, path, "exec"), globals())
+        exec(compile(source, path, "exec"), {**globals(), **additional_globals})
     except Exception as err:
         # Python exceptions are printed in Python instead of Java to give us better error
         # messages in the Ghidra console window
