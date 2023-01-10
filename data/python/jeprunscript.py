@@ -29,6 +29,8 @@ def jep_runscript(path):
 
     try:
         exec(compile(source, path, "exec"), {**globals(), **additional_globals})
+    except SystemExit as err:
+        print(f"Script {path} called exit with code {err.code}")
     except Exception as err:
         # Python exceptions are printed in Python instead of Java to give us better error
         # messages in the Ghidra console window

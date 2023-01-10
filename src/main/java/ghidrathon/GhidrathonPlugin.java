@@ -18,7 +18,7 @@ import ghidra.util.task.TaskMonitor;
 import ghidra.framework.plugintool.*;
 import ghidra.util.task.TaskLauncher;
 import ghidra.app.plugin.ProgramPlugin;
-import ghidra.app.ExamplesPluginPackage;
+import ghidra.app.CorePluginPackage;
 import ghidra.util.task.TaskMonitorAdapter;
 import ghidra.framework.options.ToolOptions;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -32,7 +32,7 @@ import ghidra.app.plugin.core.interpreter.InterpreterPanelService;
 //@formatter:off
 @PluginInfo(
 	status = PluginStatus.STABLE,
-	packageName = ExamplesPluginPackage.NAME,
+	packageName = CorePluginPackage.NAME,
 	category = PluginCategoryNames.INTERPRETERS,
 	shortDescription = "Python 3 Interpreter",
 	description = "The FLARE team's open-source Python 3 interpreter console that is tightly integrated with a loaded Ghidra program.",
