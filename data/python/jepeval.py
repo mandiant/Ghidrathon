@@ -64,6 +64,8 @@ def jepeval(line):
 
     try:
         more_input_needed = _jepeval(line)
+    except SystemExit as err:
+        more_input_needed = False
     except Exception as err:
         # Python exceptions are printed in Python instead of Java to improve error messaging
         # in the Ghidra console window
