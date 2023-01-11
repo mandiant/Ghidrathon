@@ -105,6 +105,7 @@ Use the following steps to build Ghidrathon for your environment:
 * Download the latest Ghidrathon source release from [here](https://github.com/mandiant/Ghidrathon/releases)
 * Run the following command from the Ghidrathon source directory:
     * **Note:** Ghidrathon defaults to the Python binary found in your path. You can specify a different Python binary by adding the optional argument `-PPYTHON_BIN=<absolute path to Python binary>` to the command below
+    * **Note:** you may optionally set an environment variable named `GHIDRA_INSTALL_DIR` instead of specifying `-PGHIDRA_INSTALL_DIR`
 
 ```
 $ gradle -PGHIDRA_INSTALL_DIR=<absolute path to Ghidra install>
