@@ -58,12 +58,14 @@ tasks.matching { it.name != 'copyJepNativeBinaries' && it.name != 'installJep' }
 //----------------------START "DO NOT MODIFY" SECTION------------------------------
 def ghidraInstallDir
 
-if (System.env.GHIDRA_INSTALL_DIR) {
-    ghidraInstallDir = System.env.GHIDRA_INSTALL_DIR
-}
-else if (project.hasProperty("GHIDRA_INSTALL_DIR")) {
+if (project.hasProperty("GHIDRA_INSTALL_DIR")) {
     ghidraInstallDir = project.getProperty("GHIDRA_INSTALL_DIR")
 }
+else if (System.env.GHIDRA_INSTALL_DIR) {
+    ghidraInstallDir = System.env.GHIDRA_INSTALL_DIR
+}
+
+project.logger.lifecycle("Using Ghidra install directory " + ghidraInstallDir)
 
 if (ghidraInstallDir) {
     apply from: new File(ghidraInstallDir).getCanonicalPath() + "/support/buildExtension.gradle"
