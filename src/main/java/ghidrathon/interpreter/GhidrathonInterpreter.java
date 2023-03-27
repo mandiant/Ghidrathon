@@ -14,6 +14,8 @@ import java.io.PrintWriter;
 import java.io.IOException;
 import java.io.FileNotFoundException;
 
+import org.apache.commons.io.output.WriterOutputStream;
+
 import generic.jar.ResourceFile;
 
 import ghidra.framework.Application;
@@ -48,7 +50,7 @@ public class GhidrathonInterpreter {
 	 * @throws JepException
 	 * @throws IOException 
 	 */
-	private GhidrathonInterpreter() throws JepException, IOException{
+	private GhidrathonInterpreter(PrintWriter out, PrintWriter err) throws JepException, IOException{
 		
 		// configure the Python includes path with the user's Ghdira script directory
 		String paths = "";
@@ -66,6 +68,10 @@ public class GhidrathonInterpreter {
 		
 		// configure Python includes Path
 		config.addIncludePaths(paths);
+
+		// configure Jep stdout and stderr
+		config.redirectStdout(new WriterOutputStream(out, "UTF-8"));
+		config.redirectStderr(new WriterOutputStream(err, "UTF-8"));
 		
 		// we must set the native Jep library before creating a Jep instance
 		setJepNativeBinaryPath();
@@ -224,11 +230,11 @@ public class GhidrathonInterpreter {
 	 * @return GhidrathonInterpreter
 	 * @throws RuntimeException 
 	 */
-	public static GhidrathonInterpreter get() throws RuntimeException {
+	public static GhidrathonInterpreter get(PrintWriter out, PrintWriter err) throws RuntimeException {
 		
 		try {
 			
-			return new GhidrathonInterpreter();
+			return new GhidrathonInterpreter(out, err);
 			
 		} catch (Exception e) {
 			
@@ -391,38 +397,6 @@ public class GhidrathonInterpreter {
 		} catch (JepException | FileNotFoundException e) {
 			
 			// Python exceptions should be handled in Python land; something bad must have happened
-			e.printStackTrace();
-			throw new RuntimeException(e);
-			
-		}
-		
-	}
-	
-	/**
-	 * Set output and error streams for Jep instance.
-	 * 
-	 * Output and error streams from Python interpreter are redirected to the specified streams. If these are not set, this data is lost.
-	 * 
-	 * @param out output stream
-	 * @param err error stream
-	 */
-	public void setStreams(PrintWriter out, PrintWriter err) {
-		
-		try {
-			
-			ResourceFile file = Application.getModuleDataFile(extname, "python/jepstream.py");
-			
-			jep.set("GhidraPluginToolConsoleOutWriter", out);
-			jep.set("GhidraPluginToolConsoleErrWriter", err);
-			
-			jep.runScript(file.getAbsolutePath());
-			
-			this.out = out;
-			this.err = err;
-			
-		} catch (JepException | FileNotFoundException e) {
-			
-			// ensure stack trace prints to err stream for user
 			e.printStackTrace();
 			throw new RuntimeException(e);
 			

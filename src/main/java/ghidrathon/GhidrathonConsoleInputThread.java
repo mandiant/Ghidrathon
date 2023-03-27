@@ -56,10 +56,8 @@ public class GhidrathonConsoleInputThread extends Thread {
 
 		try {
 
-			python = GhidrathonInterpreter.get();
+			python = GhidrathonInterpreter.get(out, err);
 			
-			// set Python stdout and stderr to reference our console window
-			python.setStreams(out, err);
 			python.printWelcome();
 
 		} catch (RuntimeException e) {
