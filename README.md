@@ -82,7 +82,7 @@ The following tools are needed to build, install, and run Ghidrathon:
 Tool | Version |Source |
 |---|---|---|
 | Ghidra | `>= 10.2` | https://ghidra-sre.org |
-| Jep | `>= 4.1` | https://github.com/ninia/jep |
+| Jep | `>= 4.1.1` | https://github.com/ninia/jep |
 | Gradle | `>= 7.3` | https://gradle.org/releases |
 | Python | `>= 3.7` | https://www.python.org/downloads |
 
