@@ -28,10 +28,10 @@ class TestJepBridge(unittest.TestCase):
         from java.util import Date
         from ghidra.program.database import ProgramDB
 
-        self.assertIsInstance(Date(), Object.__pytype__)
-        self.assertIsInstance(Date(), Serializable.__pytype__)
-        self.assertTrue(issubclass(Date.__pytype__, Object.__pytype__))
-        self.assertTrue(issubclass(Date.__pytype__, Serializable.__pytype__))
+        self.assertIsInstance(Date(), Object)
+        self.assertIsInstance(Date(), Serializable)
+        self.assertTrue(issubclass(Date, Object))
+        self.assertTrue(issubclass(Date, Serializable))
         self.assertIsInstance(Date(), Object)
         self.assertIsInstance(Date(), Serializable)
         self.assertTrue(issubclass(Date, Object))
