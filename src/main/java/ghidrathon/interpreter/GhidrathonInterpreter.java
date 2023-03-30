@@ -13,6 +13,7 @@ import java.lang.reflect.*;
 import java.io.PrintWriter;
 import java.io.IOException;
 import java.io.FileNotFoundException;
+import java.nio.charset.Charsets;
 
 import org.apache.commons.io.output.WriterOutputStream;
 
@@ -70,8 +71,8 @@ public class GhidrathonInterpreter {
 		config.addIncludePaths(paths);
 
 		// configure Jep stdout and stderr
-		config.redirectStdout(new WriterOutputStream(out, "UTF-8"));
-		config.redirectStderr(new WriterOutputStream(err, "UTF-8"));
+		config.redirectStdout(new WriterOutputStream(out, Charset.defaultCharset()));
+		config.redirectStderr(new WriterOutputStream(err, Charset.defaultCharset()));
 		
 		// we must set the native Jep library before creating a Jep instance
 		setJepNativeBinaryPath();
