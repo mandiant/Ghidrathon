@@ -74,10 +74,7 @@ public class GhidrathonScript extends GhidraScript {
 		
 		try {
 			
-			python = GhidrathonInterpreter.get();
-			
-			// redirect Python stdout and stderr to console window
-			python.setStreams(out, err);
+			python = GhidrathonInterpreter.get(out, err);
 			
 			ResourceFile source = GhidraScriptUtil.findScriptByName(name);
 			if (source == null) {

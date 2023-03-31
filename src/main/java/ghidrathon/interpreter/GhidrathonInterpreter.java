@@ -72,7 +72,7 @@ public class GhidrathonInterpreter {
 
 		// configure Jep stdout and stderr
 		config.redirectStdout(new WriterOutputStream(out, Charset.defaultCharset()));
-		config.redirectStderr(new WriterOutputStream(err, Charset.defaultCharset()));
+		config.redirectStdErr(new WriterOutputStream(err, Charset.defaultCharset()));
 		
 		// we must set the native Jep library before creating a Jep instance
 		setJepNativeBinaryPath();
