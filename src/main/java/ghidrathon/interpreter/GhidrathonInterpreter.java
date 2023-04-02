@@ -83,7 +83,6 @@ public class GhidrathonInterpreter {
 		// to help us further configure the Python environment
 		setJepEval();
 		setJepRunScript();
-		setJepIsInstanceIsSubclass();
 
 	}
 	
@@ -155,23 +154,6 @@ public class GhidrathonInterpreter {
 	private void setJepRunScript() throws JepException, FileNotFoundException {
 		
 		ResourceFile file = Application.getModuleDataFile(extname, "python/jeprunscript.py");
-		
-		jep.runScript(file.getAbsolutePath());
-		
-	}
-
-	/**
-	 * Configure isinstance and issubclass proxy functions in Python land.
-	 * 
-	 * We use Python to run Python scripts because it gives us better access to tracebacks.
-	 * Requires data/python/jepisinstance.py.
-	 * 
-	 * @throws JepException
-	 * @throws FileNotFoundException
-	 */
-	private void setJepIsInstanceIsSubclass() throws JepException, FileNotFoundException {
-		
-		ResourceFile file = Application.getModuleDataFile(extname, "python/jepisinstance.py");
 		
 		jep.runScript(file.getAbsolutePath());
 		
