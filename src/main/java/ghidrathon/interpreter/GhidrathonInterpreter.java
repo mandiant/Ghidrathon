@@ -70,8 +70,20 @@ public class GhidrathonInterpreter {
 		config.addIncludePaths(paths);
 
 		// configure Jep stdout and stderr
-		config.redirectStdout(new WriterOutputStream(out, System.getProperty("file.encoding")));
-		config.redirectStdErr(new WriterOutputStream(err, System.getProperty("file.encoding")));
+		config.redirectStdout(new WriterOutputStream(out, System.getProperty("file.encoding")) {
+			@Override
+			public void write(byte[] b, int off, int len) throws IOException {
+			  super.write(b, off, len);
+			  flush(); // flush the output to ensure it is displayed in real-time
+			}
+		  });
+		  config.redirectStdErr(new WriterOutputStream(err, System.getProperty("file.encoding")) {
+			@Override
+			public void write(byte[] b, int off, int len) throws IOException {
+			  super.write(b, off, len);
+			  flush(); // flush the error to ensure it is displayed in real-time
+			}
+		  });
 		
 		// we must set the native Jep library before creating a Jep instance
 		setJepNativeBinaryPath();
