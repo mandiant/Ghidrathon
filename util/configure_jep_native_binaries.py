@@ -18,10 +18,12 @@ from pathlib import Path
 JEP_PY_FOLDER_NAME = "jep"
 JEP_OS_LIB_NAME_WINDOWS = "jep.dll"
 JEP_OS_LIB_NAME_LINUX = "libjep.so"
+JEP_OS_LIB_NAME_DARWIN = "jep.cpython-%d%d-darwin.so" % sys.version_info[:2]
 
 GHIDRA_JAVA_LIB_PATH = "lib"
-GHIDRA_OS_LIB_PATH_WINDOWS = "os/win_x86_64"
-GHIDRA_OS_LIB_PATH_LINUX = "os/linux_x86_64"
+GHIDRA_OS_LIB_PATH_WINDOWS = "os/win_x86_64/jep.dll"
+GHIDRA_OS_LIB_PATH_LINUX = "os/linux_x86_64/libjep.so"
+GHIDRA_OS_LIB_PATH_DARWIN = "os/mac_x86_64/libjep.so"
 
 
 logger = logging.getLogger(__name__)
@@ -54,11 +56,11 @@ def main(args):
         logger.setLevel(logging.DEBUG)
 
     if sys.platform in ("darwin",):
-        # we haven't tested MacOS enough to know for sure if we fully support it
-        logger.error("MacOS is not supported!")
-        return -1
+        logger.debug("Detected macOS")
 
-    if sys.platform in ("win32", "cygwin"):
+        os_lib_name = JEP_OS_LIB_NAME_DARWIN
+        os_lib_path = Path(GHIDRA_OS_LIB_PATH_DARWIN)
+    elif sys.platform in ("win32", "cygwin"):
         logger.debug("Detected Windows OS")
 
         os_lib_name = JEP_OS_LIB_NAME_WINDOWS
