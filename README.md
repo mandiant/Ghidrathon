@@ -74,6 +74,7 @@ Ghidrathon supports the following operating systems:
 
 * Linux
 * Windows
+* macOS (x86_64)
 
 ## Requirements
 
