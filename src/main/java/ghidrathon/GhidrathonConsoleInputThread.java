@@ -20,6 +20,7 @@ import ghidra.app.plugin.core.interpreter.InterpreterConsole;
 import ghidra.app.script.GhidraState;
 import ghidra.util.Msg;
 import ghidrathon.interpreter.GhidrathonInterpreter;
+import ghidrathon.GhidrathonConfig;
 
 public class GhidrathonConsoleInputThread extends Thread {
 
@@ -28,8 +29,8 @@ public class GhidrathonConsoleInputThread extends Thread {
 	private InterpreterConsole console = null;
 	private AtomicBoolean shouldContinue = new AtomicBoolean(true);
 	private GhidrathonInterpreter python = null;
-	private PrintWriter err = null;
-	private PrintWriter out = null;
+
+	private final GhidrathonConfig config = new GhidrathonConfig();
 
 	GhidrathonConsoleInputThread(GhidrathonPlugin plugin) {
 
@@ -37,8 +38,11 @@ public class GhidrathonConsoleInputThread extends Thread {
 
 		this.plugin = plugin;
 		this.console = plugin.getConsole();
-		this.err = console.getErrWriter();
-		this.out = console.getOutWriter();
+
+		// init Ghidrathon configuration
+		config.addStdErr(console.getErrWriter());
+		config.addStdOut(console.getOutWriter());
+		config.addJavaExcludeLib("pdb");
 
 	}
 
@@ -56,7 +60,7 @@ public class GhidrathonConsoleInputThread extends Thread {
 
 		try {
 
-			python = GhidrathonInterpreter.get(out, err);
+			python = GhidrathonInterpreter.get(config);
 			
 			python.printWelcome();
 
@@ -66,7 +70,7 @@ public class GhidrathonConsoleInputThread extends Thread {
 				python.close();
 			}
 			
-			e.printStackTrace(err);
+			e.printStackTrace(config.getStdErr());
 			return;
 
 		}
@@ -94,7 +98,6 @@ public class GhidrathonConsoleInputThread extends Thread {
 
 					continue;
 				}
-
 
 				boolean moreInputWanted = evalPython(line);
 
