@@ -20,8 +20,8 @@ import ghidra.app.services.ConsoleService;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.app.script.GhidraScriptProvider;
 
-import ghidrathon.GhidrathonConfig;
 import ghidrathon.GhidrathonUtils;
+import ghidrathon.GhidrathonConfig;
 import ghidrathon.interpreter.GhidrathonInterpreter;
 
 public class GhidrathonScript extends GhidraScript {

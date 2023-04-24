@@ -21,8 +21,8 @@ import ghidra.util.Msg;
 import ghidra.app.script.GhidraState;
 import ghidra.app.plugin.core.interpreter.InterpreterConsole;
 
-import ghidrathon.GhidrathonConfig;
 import ghidrathon.GhidrathonUtils;
+import ghidrathon.GhidrathonConfig;
 import ghidrathon.interpreter.GhidrathonInterpreter;
 
 public class GhidrathonConsoleInputThread extends Thread {

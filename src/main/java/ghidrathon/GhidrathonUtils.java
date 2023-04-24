@@ -40,15 +40,11 @@ public class GhidrathonUtils {
 
 			// user configuration does not exist, copy default to user settings directory
 			try {
-
 				File defaultConfigPath = Application.getModuleDataFile(extname, defaultConfigFilename).getFile(false);
 				Files.copy(defaultConfigPath.toPath(), userConfigPath.toPath(), StandardCopyOption.REPLACE_EXISTING);
-
 			} catch (IOException e) {
- 
 				Msg.error(GhidrathonUtils.class, "failed to write user configuration [" + e + "]");
 				return config;
-
 			}
 		}
 
