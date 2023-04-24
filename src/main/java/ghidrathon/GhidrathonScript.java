@@ -21,6 +21,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.app.script.GhidraScriptProvider;
 
 import ghidrathon.GhidrathonConfig;
+import ghidrathon.GhidrathonUtils;
 import ghidrathon.interpreter.GhidrathonInterpreter;
 
 public class GhidrathonScript extends GhidraScript {
@@ -29,12 +30,11 @@ public class GhidrathonScript extends GhidraScript {
 	protected void run() {
 		
 		GhidrathonInterpreter python = null;
-		final GhidrathonConfig config = new GhidrathonConfig();
+		GhidrathonConfig config = GhidrathonUtils.getDefaultGhidrathonConfig();
 
 		// init Ghidrathon configuration
 		config.addStdOut(getStdOut());
 		config.addStdErr(getStdErr());
-		config.addJavaExcludeLib("pdb");
 		
 		try {
 			
@@ -72,11 +72,10 @@ public class GhidrathonScript extends GhidraScript {
 	public void runScript(String name, GhidraState scriptState) {
 		
 		GhidrathonInterpreter python = null;
-		final GhidrathonConfig config = new GhidrathonConfig();
+		GhidrathonConfig config = GhidrathonUtils.getDefaultGhidrathonConfig();
 
 		config.addStdOut(getStdOut());
 		config.addStdErr(getStdErr());
-		config.addJavaExcludeLib("pdb");
 		
 		try {
 			

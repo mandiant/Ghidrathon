@@ -22,6 +22,7 @@ import ghidra.app.script.GhidraState;
 import ghidra.app.plugin.core.interpreter.InterpreterConsole;
 
 import ghidrathon.GhidrathonConfig;
+import ghidrathon.GhidrathonUtils;
 import ghidrathon.interpreter.GhidrathonInterpreter;
 
 public class GhidrathonConsoleInputThread extends Thread {
@@ -34,7 +35,7 @@ public class GhidrathonConsoleInputThread extends Thread {
 
 	private AtomicBoolean shouldContinue = new AtomicBoolean(true);
 
-	private final GhidrathonConfig config = new GhidrathonConfig();
+	private final GhidrathonConfig config = GhidrathonUtils.getDefaultGhidrathonConfig();
 
 	GhidrathonConsoleInputThread(GhidrathonPlugin plugin) {
 
@@ -46,7 +47,6 @@ public class GhidrathonConsoleInputThread extends Thread {
 		// init Ghidrathon configuration
 		config.addStdErr(console.getErrWriter());
 		config.addStdOut(console.getOutWriter());
-		config.addJavaExcludeLib("pdb");
 
 	}
 
