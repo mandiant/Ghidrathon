@@ -14,43 +14,33 @@ import java.util.ArrayList;
 import jep.ClassList;
 import jep.ClassEnquirer;
 
-public class GhidrathonClassEnquirer implements ClassEnquirer{
+public class GhidrathonClassEnquirer implements ClassEnquirer {
 
 	private final List<String> javaExcludeLibs = new ArrayList<String>();
 	private final ClassEnquirer classList = ClassList.getInstance();
 
 	public void addJavaExcludeLib(String name) {
-
 		javaExcludeLibs.add(name);
-	
 	}
 
 	public void addJavaExcludeLibs(List<String> names) {
-
 		javaExcludeLibs.addAll(names);
-	
 	}
 
 	public boolean isJavaPackage(String name) {
-
 		if (javaExcludeLibs.contains(name)) {
 			return false;
 		}
 
 		return classList.isJavaPackage(name);
-
 	}
 
 	public String[] getClassNames(String name) {
-
 		return classList.getClassNames(name);
-
 	}
 
 	public String[] getSubPackages(String name) {
-
 		return classList.getSubPackages(name);
-
 	}
 
 }

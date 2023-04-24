@@ -8,16 +8,16 @@
 
 package ghidrathon;
 
-import java.io.PrintWriter;
 import java.util.List;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 
 public class GhidrathonConfig {
 
-	private final List<String> pythonSharedModules = new ArrayList<String>();
 	private final List<String> javaExcludeLibs = new ArrayList<String>();
 	private final List<String> pythonIncludePaths = new ArrayList<String>();
+	private final List<String> pythonSharedModules = new ArrayList<String>();
 
 	private PrintWriter out = null;
 	private PrintWriter err = null;

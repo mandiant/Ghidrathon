@@ -20,8 +20,8 @@ import ghidra.app.services.ConsoleService;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.app.script.GhidraScriptProvider;
 
-import ghidrathon.interpreter.GhidrathonInterpreter;
 import ghidrathon.GhidrathonConfig;
+import ghidrathon.interpreter.GhidrathonInterpreter;
 
 public class GhidrathonScript extends GhidraScript {
 	
@@ -29,7 +29,7 @@ public class GhidrathonScript extends GhidraScript {
 	protected void run() {
 		
 		GhidrathonInterpreter python = null;
-		GhidrathonConfig config = new GhidrathonConfig();
+		final GhidrathonConfig config = new GhidrathonConfig();
 
 		// init Ghidrathon configuration
 		config.addStdOut(getStdOut());
@@ -72,7 +72,7 @@ public class GhidrathonScript extends GhidraScript {
 	public void runScript(String name, GhidraState scriptState) {
 		
 		GhidrathonInterpreter python = null;
-		GhidrathonConfig config = new GhidrathonConfig();
+		final GhidrathonConfig config = new GhidrathonConfig();
 
 		config.addStdOut(getStdOut());
 		config.addStdErr(getStdErr());

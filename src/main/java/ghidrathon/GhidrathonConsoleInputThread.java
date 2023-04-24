@@ -8,27 +8,31 @@
 
 package ghidrathon;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.IOException;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import generic.jar.ResourceFile;
-import ghidra.app.plugin.core.interpreter.InterpreterConsole;
-import ghidra.app.script.GhidraState;
+
 import ghidra.util.Msg;
-import ghidrathon.interpreter.GhidrathonInterpreter;
+import ghidra.app.script.GhidraState;
+import ghidra.app.plugin.core.interpreter.InterpreterConsole;
+
 import ghidrathon.GhidrathonConfig;
+import ghidrathon.interpreter.GhidrathonInterpreter;
 
 public class GhidrathonConsoleInputThread extends Thread {
 
 	private static int generationCount = 0;
+	
 	private GhidrathonPlugin plugin = null;
 	private InterpreterConsole console = null;
-	private AtomicBoolean shouldContinue = new AtomicBoolean(true);
 	private GhidrathonInterpreter python = null;
+
+	private AtomicBoolean shouldContinue = new AtomicBoolean(true);
 
 	private final GhidrathonConfig config = new GhidrathonConfig();
 
