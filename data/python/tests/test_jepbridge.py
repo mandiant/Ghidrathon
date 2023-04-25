@@ -24,7 +24,7 @@ class TestJepBridge(unittest.TestCase):
     def assertIsNotJavaObject(self, o):
         from java.lang import Object
 
-        if o is not None and isinstance(o, Object):
+        if isinstance(o, Object):
             raise AssertionError("Object %s is not valid" % str(o))
 
     def test_type_instance(self):
@@ -55,4 +55,5 @@ class TestJepBridge(unittest.TestCase):
 
     def test_java_excluded_packages(self):
         import pdb
+
         self.assertIsNotJavaObject(pdb)
