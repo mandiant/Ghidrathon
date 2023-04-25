@@ -125,6 +125,10 @@ Use the following steps to install your Ghidrathon extension in Ghidra:
 * Click `Ok`
 * Restart Ghidra
 
+**OR**
+
+You can extract your Ghidrathon extension (`.zip`) directly to `<absolute path to Ghidra install>\Ghidra\Extensions` and Ghidra will prompt you to configure Ghidrathon the next time it is started.
+
 ### Disabling Jython
 
 Ghidrathon disables the built-in Jython script provider to avoid conflicts when Ghidra decides which provider should handle scripts with the `.py` file extension. This means existing Jython scripts cannot be executed with Ghidrathon installed. We recommend completely disabling the Jython extension.
