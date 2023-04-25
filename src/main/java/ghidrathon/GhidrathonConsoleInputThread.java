@@ -34,8 +34,7 @@ public class GhidrathonConsoleInputThread extends Thread {
 	private GhidrathonInterpreter python = null;
 
 	private AtomicBoolean shouldContinue = new AtomicBoolean(true);
-
-	private final GhidrathonConfig config = GhidrathonUtils.getDefaultGhidrathonConfig();
+	private GhidrathonConfig config = GhidrathonUtils.getDefaultGhidrathonConfig();
 
 	GhidrathonConsoleInputThread(GhidrathonPlugin plugin) {
 

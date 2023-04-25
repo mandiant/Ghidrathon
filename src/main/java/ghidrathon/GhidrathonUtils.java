@@ -33,7 +33,7 @@ public class GhidrathonUtils {
 	private static final String PY_INCLUDE_PATHS_KEY = "PYTHON_INCLUDE_PATHS";
 
 	/**
-	 * Get Ghidrathon's default configuration - default configuration is stored in data and copied to Ghidra user
+	 * Get Ghidrathon's default configuration - default configuration is stored in data/ and copied to Ghidra user
 	 * settings directory when first accessed
 	 */
 	public static GhidrathonConfig getDefaultGhidrathonConfig() {
@@ -68,7 +68,7 @@ public class GhidrathonUtils {
 
 		} catch (IOException e) {
 
-			Msg.error(GhidrathonUtils.class, "failed to read configuration state [" + e + "]");
+			Msg.error(GhidrathonUtils.class, "Failed to read configuration state [" + e + "]");
 			return config;
 
 		}
