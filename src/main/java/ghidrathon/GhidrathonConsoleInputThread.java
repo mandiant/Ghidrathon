@@ -8,28 +8,33 @@
 
 package ghidrathon;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.IOException;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import generic.jar.ResourceFile;
-import ghidra.app.plugin.core.interpreter.InterpreterConsole;
-import ghidra.app.script.GhidraState;
+
 import ghidra.util.Msg;
+import ghidra.app.script.GhidraState;
+import ghidra.app.plugin.core.interpreter.InterpreterConsole;
+
+import ghidrathon.GhidrathonUtils;
+import ghidrathon.GhidrathonConfig;
 import ghidrathon.interpreter.GhidrathonInterpreter;
 
 public class GhidrathonConsoleInputThread extends Thread {
 
 	private static int generationCount = 0;
+	
 	private GhidrathonPlugin plugin = null;
 	private InterpreterConsole console = null;
-	private AtomicBoolean shouldContinue = new AtomicBoolean(true);
 	private GhidrathonInterpreter python = null;
-	private PrintWriter err = null;
-	private PrintWriter out = null;
+
+	private AtomicBoolean shouldContinue = new AtomicBoolean(true);
+	private GhidrathonConfig config = GhidrathonUtils.getDefaultGhidrathonConfig();
 
 	GhidrathonConsoleInputThread(GhidrathonPlugin plugin) {
 
@@ -37,8 +42,10 @@ public class GhidrathonConsoleInputThread extends Thread {
 
 		this.plugin = plugin;
 		this.console = plugin.getConsole();
-		this.err = console.getErrWriter();
-		this.out = console.getOutWriter();
+
+		// init Ghidrathon configuration
+		config.addStdErr(console.getErrWriter());
+		config.addStdOut(console.getOutWriter());
 
 	}
 
@@ -56,7 +63,7 @@ public class GhidrathonConsoleInputThread extends Thread {
 
 		try {
 
-			python = GhidrathonInterpreter.get(out, err);
+			python = GhidrathonInterpreter.get(config);
 			
 			python.printWelcome();
 
@@ -66,7 +73,7 @@ public class GhidrathonConsoleInputThread extends Thread {
 				python.close();
 			}
 			
-			e.printStackTrace(err);
+			e.printStackTrace(config.getStdErr());
 			return;
 
 		}
@@ -94,7 +101,6 @@ public class GhidrathonConsoleInputThread extends Thread {
 
 					continue;
 				}
-
 
 				boolean moreInputWanted = evalPython(line);
 

@@ -20,6 +20,8 @@ import ghidra.app.services.ConsoleService;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.app.script.GhidraScriptProvider;
 
+import ghidrathon.GhidrathonUtils;
+import ghidrathon.GhidrathonConfig;
 import ghidrathon.interpreter.GhidrathonInterpreter;
 
 public class GhidrathonScript extends GhidraScript {
@@ -28,24 +30,26 @@ public class GhidrathonScript extends GhidraScript {
 	protected void run() {
 		
 		GhidrathonInterpreter python = null;
-		
-		final PrintWriter out = getStdOut();
-		final PrintWriter err = getStdErr();
+		GhidrathonConfig config = GhidrathonUtils.getDefaultGhidrathonConfig();
+
+		// init Ghidrathon configuration
+		config.addStdOut(getStdOut());
+		config.addStdErr(getStdErr());
 		
 		try {
 			
-			python = GhidrathonInterpreter.get(out, err);
+			python = GhidrathonInterpreter.get(config);
 			
 			// run Python script from Python interpreter
 			python.runScript(getSourceFile(), this);
 			
 			// flush stdout and stderr to ensure all is printed to console window
-			err.flush();
-			out.flush();
+			config.getStdErr().flush();
+			config.getStdOut().flush();
 			
 		} catch (RuntimeException e) {
 			
-			e.printStackTrace(err);
+			e.printStackTrace(config.getStdErr());
 			
 		} finally {
 			
@@ -68,13 +72,14 @@ public class GhidrathonScript extends GhidraScript {
 	public void runScript(String name, GhidraState scriptState) {
 		
 		GhidrathonInterpreter python = null;
-		
-		final PrintWriter out = getStdOut();
-		final PrintWriter err = getStdErr();
+		GhidrathonConfig config = GhidrathonUtils.getDefaultGhidrathonConfig();
+
+		config.addStdOut(getStdOut());
+		config.addStdErr(getStdErr());
 		
 		try {
 			
-			python = GhidrathonInterpreter.get(out, err);
+			python = GhidrathonInterpreter.get(config);
 			
 			ResourceFile source = GhidraScriptUtil.findScriptByName(name);
 			if (source == null) {
@@ -109,7 +114,7 @@ public class GhidrathonScript extends GhidraScript {
 			
 		} catch (Exception e) {
 			
-			e.printStackTrace(err);
+			e.printStackTrace(config.getStdErr());
 			
 		} finally {
 			
