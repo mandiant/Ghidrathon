@@ -3,171 +3,173 @@
 //  you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at: [package root]/LICENSE.txt
 // Unless required by applicable law or agreed to in writing, software distributed under the License
-//  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and limitations under the License.
+//  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+// or implied.
+// See the License for the specific language governing permissions and limitations under the
+// License.
 
 package ghidrathon;
 
-import java.io.File;
-import java.io.PrintWriter;
-import java.io.IOException;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import generic.jar.ResourceFile;
-
-import ghidra.util.Msg;
-import ghidra.app.script.GhidraState;
 import ghidra.app.plugin.core.interpreter.InterpreterConsole;
-
-import ghidrathon.GhidrathonUtils;
-import ghidrathon.GhidrathonConfig;
+import ghidra.app.script.GhidraState;
+import ghidra.util.Msg;
 import ghidrathon.interpreter.GhidrathonInterpreter;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class GhidrathonConsoleInputThread extends Thread {
 
-	private static int generationCount = 0;
-	
-	private GhidrathonPlugin plugin = null;
-	private InterpreterConsole console = null;
-	private GhidrathonInterpreter python = null;
+  private static int generationCount = 0;
 
-	private AtomicBoolean shouldContinue = new AtomicBoolean(true);
-	private GhidrathonConfig config = GhidrathonUtils.getDefaultGhidrathonConfig();
+  private GhidrathonPlugin plugin = null;
+  private InterpreterConsole console = null;
+  private GhidrathonInterpreter python = null;
 
-	GhidrathonConsoleInputThread(GhidrathonPlugin plugin) {
+  private AtomicBoolean shouldContinue = new AtomicBoolean(true);
+  private GhidrathonConfig config = GhidrathonUtils.getDefaultGhidrathonConfig();
 
-		super("Ghidrathon console input thread (generation " + ++generationCount + ")");
+  GhidrathonConsoleInputThread(GhidrathonPlugin plugin) {
 
-		this.plugin = plugin;
-		this.console = plugin.getConsole();
+    super("Ghidrathon console input thread (generation " + ++generationCount + ")");
 
-		// init Ghidrathon configuration
-		config.addStdErr(console.getErrWriter());
-		config.addStdOut(console.getOutWriter());
+    this.plugin = plugin;
+    this.console = plugin.getConsole();
 
-	}
+    // init Ghidrathon configuration
+    config.addStdErr(console.getErrWriter());
+    config.addStdOut(console.getOutWriter());
+  }
 
-	/**
-	 * Console input thread.
-	 * 
-	 * This thread passes Python statements from Java to Python to be evaluated. The interpreter is
-	 * is configured to print stdout and stderr to the console Window. Multi-line Python blocks are
-	 * supported but this is mostly handled in by the interpreter.
-	 */
-	@Override
-	public void run() {
+  /**
+   * Console input thread.
+   *
+   * <p>This thread passes Python statements from Java to Python to be evaluated. The interpreter is
+   * is configured to print stdout and stderr to the console Window. Multi-line Python blocks are
+   * supported but this is mostly handled in by the interpreter.
+   */
+  @Override
+  public void run() {
 
-		console.clear();
+    console.clear();
 
-		try {
+    try {
 
-			python = GhidrathonInterpreter.get(config);
-			
-			python.printWelcome();
+      python = GhidrathonInterpreter.get(config);
 
-		} catch (RuntimeException e) {
+      python.printWelcome();
 
-			if (python != null) {
-				python.close();
-			}
-			
-			e.printStackTrace(config.getStdErr());
-			return;
+    } catch (RuntimeException e) {
 
-		}
+      if (python != null) {
+        python.close();
+      }
 
-		try (BufferedReader reader = new BufferedReader(new InputStreamReader(console.getStdin()))) {
+      e.printStackTrace(config.getStdErr());
+      return;
+    }
 
-			plugin.flushConsole();
-			console.setPrompt(python.getPrimaryPrompt());
-			
-			// begin reading and passing input from console stdin to Python to be evaluated
-			while (shouldContinue.get()) {
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(console.getStdin()))) {
 
-				String line;
+      plugin.flushConsole();
+      console.setPrompt(python.getPrimaryPrompt());
 
-				if (console.getStdin().available() > 0) {
-					line = reader.readLine();
-				} else {
-					try {
+      // begin reading and passing input from console stdin to Python to be evaluated
+      while (shouldContinue.get()) {
 
-						Thread.sleep(50);
+        String line;
 
-					} catch (InterruptedException e) {
+        if (console.getStdin().available() > 0) {
+          line = reader.readLine();
+        } else {
+          try {
 
-					}
+            Thread.sleep(50);
 
-					continue;
-				}
+          } catch (InterruptedException e) {
 
-				boolean moreInputWanted = evalPython(line);
+          }
 
-				this.plugin.flushConsole();
-				this.console.setPrompt(moreInputWanted ? python.getSecondaryPrompt() : python.getPrimaryPrompt());
-			}
-			
-		} catch (RuntimeException | IOException e) {
+          continue;
+        }
 
-			e.printStackTrace();
-			Msg.error(GhidrathonConsoleInputThread.class,
-					"Internal error reading commands from python console. Please reset.", e);
+        boolean moreInputWanted = evalPython(line);
 
-		} finally {
+        this.plugin.flushConsole();
+        this.console.setPrompt(
+            moreInputWanted ? python.getSecondaryPrompt() : python.getPrimaryPrompt());
+      }
 
-			python.close();
+    } catch (RuntimeException | IOException e) {
 
-		}
-	}
+      e.printStackTrace();
+      Msg.error(
+          GhidrathonConsoleInputThread.class,
+          "Internal error reading commands from python console. Please reset.",
+          e);
 
-	/**
-	 * Configures Ghidra state and passes Python statement to Python.
-	 * 
-	 * This function must be called by the same thread that created the Jep instance.
-	 * See https://github.com/NationalSecurityAgency/ghidra/blob/master/Ghidra/Features/Python/src/main/java/ghidra/python/PythonPluginExecutionThread.java#L55
-	 * 
-	 * @param line Python to evaluate
-	 * @return True if more input needed, otherwise False
-	 * @throws RuntimeException
-	 */
-	private boolean evalPython(String line) throws RuntimeException {
+    } finally {
 
-		boolean status;
-		
-		// set transaction for the execution
-		int transactionNumber = -1;
-		if (plugin.getCurrentProgram() != null) {
-			transactionNumber = plugin.getCurrentProgram().startTransaction("Ghidrathon command");
-		}
+      python.close();
+    }
+  }
 
-		// setup Ghidra state to be passed into interpreter
-		plugin.getInteractiveTaskMonitor().clearCanceled();
-		plugin.getInteractiveScript().setSourceFile(new ResourceFile(new File("Ghidrathon")));
-		plugin.getInteractiveScript()
-				.set(new GhidraState(plugin.getTool(), plugin.getTool().getProject(), plugin.getCurrentProgram(),
-						plugin.getProgramLocation(), plugin.getProgramSelection(), plugin.getProgramHighlight()),
-						plugin.getInteractiveTaskMonitor(), new PrintWriter(console.getStdOut()));
+  /**
+   * Configures Ghidra state and passes Python statement to Python.
+   *
+   * <p>This function must be called by the same thread that created the Jep instance. See
+   * https://github.com/NationalSecurityAgency/ghidra/blob/master/Ghidra/Features/Python/src/main/java/ghidra/python/PythonPluginExecutionThread.java#L55
+   *
+   * @param line Python to evaluate
+   * @return True if more input needed, otherwise False
+   * @throws RuntimeException
+   */
+  private boolean evalPython(String line) throws RuntimeException {
 
-		try {
-			
-			status = python.eval(line, plugin.getInteractiveScript());
-		
-		} finally {
-			
-			if (plugin.getCurrentProgram() != null) {
-				plugin.getCurrentProgram().endTransaction(transactionNumber, true);
-			}
-			
-		}
+    boolean status;
 
-		return status;
+    // set transaction for the execution
+    int transactionNumber = -1;
+    if (plugin.getCurrentProgram() != null) {
+      transactionNumber = plugin.getCurrentProgram().startTransaction("Ghidrathon command");
+    }
 
-	}
+    // setup Ghidra state to be passed into interpreter
+    plugin.getInteractiveTaskMonitor().clearCanceled();
+    plugin.getInteractiveScript().setSourceFile(new ResourceFile(new File("Ghidrathon")));
+    plugin
+        .getInteractiveScript()
+        .set(
+            new GhidraState(
+                plugin.getTool(),
+                plugin.getTool().getProject(),
+                plugin.getCurrentProgram(),
+                plugin.getProgramLocation(),
+                plugin.getProgramSelection(),
+                plugin.getProgramHighlight()),
+            plugin.getInteractiveTaskMonitor(),
+            new PrintWriter(console.getStdOut()));
 
-	void dispose() {
+    try {
 
-		shouldContinue.set(false);
+      status = python.eval(line, plugin.getInteractiveScript());
 
-	}
+    } finally {
+
+      if (plugin.getCurrentProgram() != null) {
+        plugin.getCurrentProgram().endTransaction(transactionNumber, true);
+      }
+    }
+
+    return status;
+  }
+
+  void dispose() {
+
+    shouldContinue.set(false);
+  }
 }
