@@ -27,6 +27,7 @@ import jep.JepConfig;
 import jep.JepException;
 import jep.MainInterpreter;
 
+import ghidrathon.GhidrathonUtils;
 import ghidrathon.GhidrathonScript;
 import ghidrathon.GhidrathonConfig;
 import ghidrathon.GhidrathonClassEnquirer;
@@ -43,9 +44,6 @@ public class GhidrathonInterpreter {
 	private final GhidrathonClassEnquirer ghidrathonClassEnquirer = new GhidrathonClassEnquirer();
 
 	private boolean scriptMethodsInjected = false;
-
-	// extension name e.g. "Ghidrathon"	
-	private static String extname = Application.getMyModuleRootDirectory().getName();
 	
 	/**
 	 * Create and configure a new GhidrathonInterpreter instance.
@@ -60,20 +58,26 @@ public class GhidrathonInterpreter {
 		// configure the Python includes path with the user's Ghdira script directory
 		String paths = "";
 		for (ResourceFile resourceFile : GhidraScriptUtil.getScriptSourceDirectories()) {
+
 			paths += resourceFile.getFile(false).getAbsolutePath() + File.pathSeparator;
+
 		}
 		
 		// add data/python/ to Python includes directory
-		paths += Application.getModuleDataSubDirectory(extname, "python") + File.pathSeparator;
+		paths += Application.getModuleDataSubDirectory(GhidrathonUtils.THIS_EXTENSION_NAME, "python") + File.pathSeparator;
 		
 		// add paths specified in Ghidrathon config
 		for (String path: ghidrathonConfig.getPythonIncludePaths()) {
+
 			paths += path + File.pathSeparator;
+
 		}
 
 		// configure Java names that will be ignored when importing from Python
 		for (String name: ghidrathonConfig.getJavaExcludeLibs()) {
+
 			ghidrathonClassEnquirer.addJavaExcludeLib(name);
+
 		}
 		
 		// set the class loader with access to Ghidra scripting API
@@ -85,13 +89,16 @@ public class GhidrathonInterpreter {
 		// configure Python includes Path
 		jepConfig.addIncludePaths(paths);
 
-		// add Python shared modules; necessary for Python modules that leverage the c-api e.g. numpy
+		// add Python shared modules - these should be CPython modules for Jep to handle specially
 		for (String name: ghidrathonConfig.getPythonSharedModules()) {
+
 			jepConfig.addSharedModules(name);
+
 		}
 
 		// configure Jep stdout
 		if (ghidrathonConfig.getStdOut() != null) {
+
 			jepConfig.redirectStdout(new WriterOutputStream(ghidrathonConfig.getStdOut(), System.getProperty("file.encoding")) {
 
 				@Override
@@ -114,6 +121,7 @@ public class GhidrathonInterpreter {
 				}
 
 			});
+
 		}
 		
 
@@ -148,12 +156,12 @@ public class GhidrathonInterpreter {
 		
 		try {
 			
-			nativeJep = Application.getOSFile(extname, "libjep.so");
+			nativeJep = Application.getOSFile(GhidrathonUtils.THIS_EXTENSION_NAME, "libjep.so");
 			
 		} catch (FileNotFoundException e) {
 			
 			// whoops try Windows
-			nativeJep = Application.getOSFile(extname, "jep.dll");
+			nativeJep = Application.getOSFile(GhidrathonUtils.THIS_EXTENSION_NAME, "jep.dll");
 
 		}
 		
@@ -181,7 +189,7 @@ public class GhidrathonInterpreter {
 	 */
 	private void setJepEval() throws JepException, FileNotFoundException {
 		
-		ResourceFile file = Application.getModuleDataFile(extname, "python/jepeval.py");
+		ResourceFile file = Application.getModuleDataFile(GhidrathonUtils.THIS_EXTENSION_NAME, "python/jepeval.py");
 		
 		jep.runScript(file.getAbsolutePath());
 		
@@ -198,7 +206,7 @@ public class GhidrathonInterpreter {
 	 */
 	private void setJepRunScript() throws JepException, FileNotFoundException {
 		
-		ResourceFile file = Application.getModuleDataFile(extname, "python/jeprunscript.py");
+		ResourceFile file = Application.getModuleDataFile(GhidrathonUtils.THIS_EXTENSION_NAME, "python/jeprunscript.py");
 		
 		jep.runScript(file.getAbsolutePath());
 		
@@ -220,7 +228,7 @@ public class GhidrathonInterpreter {
 			return;
 		}
 
-		ResourceFile file = Application.getModuleDataFile(extname, "python/jepbuiltins.py");
+		ResourceFile file = Application.getModuleDataFile(GhidrathonUtils.THIS_EXTENSION_NAME, "python/jepbuiltins.py");
 		jep.runScript(file.getAbsolutePath());
 
 		// inject GhidraScript public/private fields e.g. currentAddress into Python
@@ -243,7 +251,7 @@ public class GhidrathonInterpreter {
 
 		if (!scriptMethodsInjected) {
 			// inject GhidraScript methods into Python
-			file = Application.getModuleDataFile(extname, "python/jepinject.py");
+			file = Application.getModuleDataFile(GhidrathonUtils.THIS_EXTENSION_NAME, "python/jepinject.py");
 			jep.set("__ghidra_script__", script);
 			jep.runScript(file.getAbsolutePath());
 		}
@@ -435,7 +443,7 @@ public class GhidrathonInterpreter {
 		
 		try {
 			
-			ResourceFile file = Application.getModuleDataFile(extname, "python/jepwelcome.py");
+			ResourceFile file = Application.getModuleDataFile(GhidrathonUtils.THIS_EXTENSION_NAME, "python/jepwelcome.py");
 
 			jep.set("GhidraVersion", Application.getApplicationVersion());
 

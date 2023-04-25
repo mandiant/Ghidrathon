@@ -21,6 +21,12 @@ class TestJepBridge(unittest.TestCase):
         if not (o is None or isinstance(o, Object)):
             raise AssertionError("Object %s is not valid" % str(o))
 
+    def assertIsNotJavaObject(self, o):
+        from java.lang import Object
+
+        if o is not None and isinstance(o, Object):
+            raise AssertionError("Object %s is not valid" % str(o))
+
     def test_type_instance(self):
         # see Jep: https://github.com/ninia/jep/blob/15e36a7ba54eb7d8f7ffd85f16675fa4fd54eb1d/src/test/python/test_import.py#L54-L65
         from java.lang import Object
@@ -46,3 +52,7 @@ class TestJepBridge(unittest.TestCase):
 
     def test_ghidra_script_methods(self):
         self.assertIsInstance(getGhidraVersion(), str)
+
+    def test_java_excluded_packages(self):
+        import pdb
+        self.assertIsNotJavaObject(pdb)

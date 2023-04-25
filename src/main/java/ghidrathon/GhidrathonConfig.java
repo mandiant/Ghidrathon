@@ -13,11 +13,20 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 
+/**
+ * Ghidrathon's configuration class
+ *
+ * Stores
+ *   - stdout and stderr
+ *   - Python modules to handle as shared modules - relevant to CPython modules
+ *   - Java package names to exclude from Python imports
+ *   - Python include paths to add to Python interpreter environment
+ */
 public class GhidrathonConfig {
 
 	private final List<String> javaExcludeLibs = new ArrayList<String>();
-	private final List<String> pythonIncludePaths = new ArrayList<String>();
-	private final List<String> pythonSharedModules = new ArrayList<String>();
+	private final List<String> pyIncludePaths = new ArrayList<String>();
+	private final List<String> pySharedModules = new ArrayList<String>();
 
 	private PrintWriter out = null;
 	private PrintWriter err = null;
@@ -39,15 +48,15 @@ public class GhidrathonConfig {
 	}
 
 	public void addPythonSharedModule(String name) {
-		pythonSharedModules.add(name);
+		pySharedModules.add(name);
 	}
 
 	public void addPythonSharedModules(List<String> names) {
-		pythonSharedModules.addAll(names);
+		pySharedModules.addAll(names);
 	}
 
 	public Iterable<String> getPythonSharedModules() {
-		return Collections.unmodifiableList(pythonSharedModules);
+		return Collections.unmodifiableList(pySharedModules);
 	}
 
 	public void addJavaExcludeLib(String name) {
@@ -63,14 +72,14 @@ public class GhidrathonConfig {
 	}
 
 	public void addPythonIncludePath(String path) {
-		pythonIncludePaths.add(path);
+		pyIncludePaths.add(path);
 	}
 
 	public void addPythonIncludePaths(List<String> paths) {
-		pythonIncludePaths.addAll(paths);
+		pyIncludePaths.addAll(paths);
 	}
 
 	public Iterable<String> getPythonIncludePaths() {
-		return Collections.unmodifiableList(pythonIncludePaths);
+		return Collections.unmodifiableList(pyIncludePaths);
 	}
 }

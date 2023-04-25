@@ -19,53 +19,81 @@ import ghidra.framework.options.SaveState;
 
 import ghidrathon.GhidrathonConfig;
 
+/**
+ * Utility functions
+ */
 public class GhidrathonUtils {
 
-	private static String defaultConfigFilename = "GhidrathonConfig.xml";
-	private static String javaExcludeLibsKey = "JAVA_EXCLUDE_LIBS";
-	private static String pythonSharedModulesKey = "PYTHON_SHARED_MODULES";
-	private static String pythonIncludePathsKey = "PYTHON_INCLUDE_PATHS";
-	
-	// extension name e.g. "Ghidrathon"	
-	private static String extname = Application.getMyModuleRootDirectory().getName();
+	// name of this extension e.g. "Ghidrathon"	
+	public static final String THIS_EXTENSION_NAME = Application.getMyModuleRootDirectory().getName();
 
+	private static final String DEFAULT_CONFIG_FILENAME = "GhidrathonConfig.xml";
+	private static final String JAVA_EXCLUDE_LIBS_KEY = "JAVA_EXCLUDE_LIBS";
+	private static final String PY_SHARED_MODULES_KEY = "PYTHON_SHARED_MODULES";
+	private static final String PY_INCLUDE_PATHS_KEY = "PYTHON_INCLUDE_PATHS";
+
+	/**
+	 * Get Ghidrathon's default configuration - default configuration is stored in data and copied to Ghidra user
+	 * settings directory when first accessed
+	 */
 	public static GhidrathonConfig getDefaultGhidrathonConfig() {
 
 		GhidrathonConfig config = new GhidrathonConfig();
+		File userSettingsPath = new File(Application.getUserSettingsDirectory(), DEFAULT_CONFIG_FILENAME);
 
-		File userConfigPath = new File(Application.getUserSettingsDirectory(), defaultConfigFilename);
+		// copy configuration from /data to Ghidra user settings if file does not already exist
+		if (!userSettingsPath.isFile()) {
 
-		if (!userConfigPath.isFile()) {
-			Msg.info(GhidrathonUtils.class, "adding configuration to user settings at " + userConfigPath);
+			Msg.info(GhidrathonUtils.class, "Addings configuration to user settings at " + userSettingsPath);
 
-			// user configuration does not exist, copy default to user settings directory
 			try {
-				File defaultConfigPath = Application.getModuleDataFile(extname, defaultConfigFilename).getFile(false);
-				Files.copy(defaultConfigPath.toPath(), userConfigPath.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+				File dataPath = Application.getModuleDataFile(THIS_EXTENSION_NAME, DEFAULT_CONFIG_FILENAME).getFile(false);
+				Files.copy(dataPath.toPath(), userSettingsPath.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
 			} catch (IOException e) {
-				Msg.error(GhidrathonUtils.class, "failed to write user configuration [" + e + "]");
+
+				Msg.error(GhidrathonUtils.class, "Failed to write user configuration [" + e + "]");
 				return config;
+
 			}
 		}
 
 		SaveState state = null;
+
+		// attempt to read configuration from Ghidra user settings
 		try {
-			state = new SaveState(userConfigPath);
+
+			state = new SaveState(userSettingsPath);
+
 		} catch (IOException e) {
+
 			Msg.error(GhidrathonUtils.class, "failed to read configuration state [" + e + "]");
 			return config;
+
 		}
 
-		for (String name: state.getStrings(javaExcludeLibsKey, new String[0])) {
+		// add Java exclude libs that will be ignored when importing from Python - this is used to avoid
+		// naming conflicts, e.g. "pdb"
+		for (String name: state.getStrings(JAVA_EXCLUDE_LIBS_KEY, new String[0])) {
+
 			config.addJavaExcludeLib(name);
+
 		}
 
-		for (String name: state.getStrings(pythonIncludePathsKey, new String[0])) {
+		// add Python include paths
+		for (String name: state.getStrings(PY_INCLUDE_PATHS_KEY, new String[0])) {
+
 			config.addPythonIncludePath(name);
+
 		}
 
-		for (String name: state.getStrings(pythonSharedModulesKey, new String[0])) {
+		// add Python shared modules - these modules are handled specially by Jep to avoid crashes caused
+		// by CPython extensions, e.g. numpy
+		for (String name: state.getStrings(PY_SHARED_MODULES_KEY, new String[0])) {
+
 			config.addPythonSharedModule(name);
+
 		}
 
 		return config;
