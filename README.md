@@ -20,6 +20,8 @@ The interpreter window provides interactive access to your Python 3 interpreter.
 
 Ghidrathon integrates directly with the Ghidra Script Manager enabling you to create, edit, and execute Python 3 scripts within Ghidra. Click "Create New Script" and select "Python 3" to create a new Python 3 script. Click "Run Script" or "Run Editors's Script" to execute your Python 3 script and check the Ghidra Console window for script output.
 
+For compatibility with existing Jython scripts, Ghidrathon scripts must end with the `.py3` extension. This only applies to the script itself - modules imported by the script should use the usual `.py` extension.
+
 ![example](./data/ghidrathon_script.png)
 
 ## Ghidra Headless Mode
@@ -27,31 +29,25 @@ Ghidrathon integrates directly with the Ghidra Script Manager enabling you to cr
 Ghidrathon helps you execute Python 3 scripts in Ghidra headless mode. Execute the `analyzeHeadless` script located in your Ghidra installation folder, specify your Python 3 script, and check the console window for script output.
 
 ```
-$ analyzeHeadless C:\Users\wampus example -process example.o -postScript ghidrathon_example.py
-...
-INFO  SCRIPT: C:\Users\wampus\.ghidra\.ghidra_10.0.3_PUBLIC\Extensions\Ghidrathon-master\ghidra_scripts\ghidrathon_example.py (HeadlessAnalyzer)
-Function _init @ 0x101000: 3 blocks, 8 instructions
-Function FUN_00101020 @ 0x101020: 1 blocks, 2 instructions
-Function __cxa_finalize @ 0x101040: 1 blocks, 2 instructions
-Function printf @ 0x101050: 1 blocks, 2 instructions
-Function _start @ 0x101060: 1 blocks, 13 instructions
-Function deregister_tm_clones @ 0x101090: 4 blocks, 9 instructions
-Function register_tm_clones @ 0x1010c0: 4 blocks, 14 instructions
-Function __do_global_dtors_aux @ 0x101100: 5 blocks, 14 instructions
-Function frame_dummy @ 0x101140: 1 blocks, 2 instructions
-Function main @ 0x101149: 1 blocks, 9 instructions
-Function __libc_csu_init @ 0x101170: 4 blocks, 34 instructions
-Function __libc_csu_fini @ 0x1011e0: 1 blocks, 2 instructions
-Function _fini @ 0x1011e8: 1 blocks, 4 instructions
-Function _ITM_deregisterTMCloneTable @ 0x105000: 0 blocks, 0 instructions
-Function printf @ 0x105008: 0 blocks, 0 instructions
-Function __libc_start_main @ 0x105010: 0 blocks, 0 instructions
-Function __gmon_start__ @ 0x105018: 0 blocks, 0 instructions
-Function _ITM_registerTMCloneTable @ 0x105020: 0 blocks, 0 instructions
-Function __cxa_finalize @ 0x105028: 0 blocks, 0 instructions
-...
-INFO  REPORT: Post-analysis succeeded for file: /example.o (HeadlessAnalyzer)
-INFO  REPORT: Save succeeded for processed file: /example.o (HeadlessAnalyzer)
+$ ~/ghidra/support/analyzeHeadless ~/dev/ghidra_projects testProject -import /tmp/test.elf -postScript ghidrathon_example.py3
+openjdk version "17.0.7" 2023-04-18
+[...]
+INFO  SCRIPT: /home/user/.ghidra/.ghidra_10.3_PUBLIC/Extensions/Ghidrathon/ghidra_scripts/ghidrathon_example.py3 (HeadlessAnalyzer)  
+Function FUN_00400380 @ 0x400380: 1 blocks, 2 instructions
+Function __libc_init @ 0x400390: 1 blocks, 1 instructions
+Function __cxa_atexit @ 0x4003a0: 1 blocks, 1 instructions
+Function puts @ 0x4003b0: 1 blocks, 1 instructions
+Function __atexit_handler_wrapper @ 0x4003c0: 3 blocks, 4 instructions
+Function _start @ 0x4003d0: 1 blocks, 16 instructions
+Function atexit @ 0x400420: 1 blocks, 4 instructions
+Function main @ 0x400436: 1 blocks, 6 instructions
+Function __libc_init @ 0x403000: 0 blocks, 0 instructions
+Function __cxa_atexit @ 0x403008: 0 blocks, 0 instructions
+Function puts @ 0x403010: 0 blocks, 0 instructions
+INFO  ANALYZING changes made by post scripts: /tmp/test.elf (HeadlessAnalyzer)  
+INFO  REPORT: Post-analysis succeeded for file: /tmp/test.elf (HeadlessAnalyzer)  
+INFO  REPORT: Save succeeded for: /test.elf (testProject:/test.elf) (HeadlessAnalyzer)  
+INFO  REPORT: Import succeeded (HeadlessAnalyzer)  
 ```
 
 For more information on running Ghidra in headless mode check out `<ghidra_install>/support/analyzeHeadlessREADME.html`.
@@ -128,22 +124,6 @@ Use the following steps to install your Ghidrathon extension in Ghidra:
 **OR**
 
 You can extract your Ghidrathon extension (`.zip`) directly to `<absolute path to Ghidra install>\Ghidra\Extensions` and Ghidra will prompt you to configure Ghidrathon the next time it is started.
-
-### Disabling Jython
-
-Ghidrathon disables the built-in Jython script provider to avoid conflicts when Ghidra decides which provider should handle scripts with the `.py` file extension. This means existing Jython scripts cannot be executed with Ghidrathon installed. We recommend completely disabling the Jython extension.
-
-Use the following steps to disable the Jython extension:
-
-* Navigate to `File > Configure...`
-* Click `Ghidra Core`
-* Un-check `PythonPlugin`
-
-Use the following steps to enable the Jython extension:
-
-* Uninstall Ghidrathon
-* Enable the Jython extension using the steps outlined above
-* Restart Ghidra
 
 ## Using Ghidrathon
 
