@@ -29,7 +29,7 @@ if (project.hasProperty("PYTHON_BIN")) {
 	pythonBin = project.getProperty("PYTHON_BIN")
 }
 else {
-	pythonBin = "python"
+	pythonBin = "python3"
 }
 
 // we need to install Jep; this requires C++ build tools on Windows (see README); we need to define
