@@ -41,16 +41,16 @@ task installJep(type: Exec) {
 
 // we need to copy the Jep native binaries built in installJep to our extension directory; we use a small
 // utility script written in Python
-task copyJepNativeBinaries(type: Exec) {
+task preBuild(type: Exec) {
     dependsOn installJep
     workingDir "${projectDir}"
-    commandLine pythonBin, "util${File.separator}configure_jep_native_binaries.py"
+    commandLine pythonBin, "util${File.separator}buildsupport.py", 'prebuild'
 }
 
-// make all tasks not matching copyJepNativeBinaries or installJep depend on copyJepNativeBinaries; mostly
+// make all tasks not matching preBuild or installJep depend on preBuild; mostly
 // used to ensure our tasks run before Ghidra buildExtension task
-tasks.matching { it.name != 'copyJepNativeBinaries' && it.name != 'installJep' }.all { Task task ->
-    task.dependsOn copyJepNativeBinaries
+tasks.matching { it.name != 'preBuild' && it.name != 'installJep' }.all { Task task ->
+    task.dependsOn preBuild
 }
 
 // from here we use the standard Gradle build provided by Ghidra framework
@@ -74,3 +74,13 @@ else {
     throw new GradleException("GHIDRA_INSTALL_DIR is not defined!")
 }
 //----------------------END "DO NOT MODIFY" SECTION-------------------------------
+
+// post-build scripted steps
+// automate install to ghidra and rename jep library for Mac M1
+task postBuild(type: Exec) {
+    dependsOn buildExtension
+    workingDir "${projectDir}"
+    commandLine pythonBin, "util${File.separator}buildsupport.py", 'postbuild'
+}
+
+buildExtension.finalizedBy('postBuild')
