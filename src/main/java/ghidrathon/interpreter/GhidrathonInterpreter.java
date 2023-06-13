@@ -42,8 +42,13 @@ import jep.MainInterpreter;
 import jep.PyConfig;
 import org.apache.commons.io.output.WriterOutputStream;
 
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+
+
 /** Utility class used to configure a Jep instance to access Ghidra */
 public class GhidrathonInterpreter {
+  static final Logger log = LogManager.getLogger(GhidrathonInterpreter.class);
 
   private Jep jep = null;
   private GhidrathonConfig ghidrathonConfig = null;
@@ -60,90 +65,105 @@ public class GhidrathonInterpreter {
    * @throws IOException
    */
   private GhidrathonInterpreter(GhidrathonConfig config) throws JepException, IOException {
+    log.info("GhidrathonInterpreter constructor 1");
 
-    ghidrathonConfig = config;
+    try {
+      ghidrathonConfig = config;
 
-    // configure the Python includes path with the user's Ghdira script directory
-    String paths = "";
-    for (ResourceFile resourceFile : GhidraScriptUtil.getScriptSourceDirectories()) {
+      // configure the Python includes path with the user's Ghdira script directory
+      String paths = "";
+      for (ResourceFile resourceFile : GhidraScriptUtil.getScriptSourceDirectories()) {
 
-      paths += resourceFile.getFile(false).getAbsolutePath() + File.pathSeparator;
+        paths += resourceFile.getFile(false).getAbsolutePath() + File.pathSeparator;
+      }
+
+      // add data/python/ to Python includes directory
+      paths +=
+          Application.getModuleDataSubDirectory(GhidrathonUtils.THIS_EXTENSION_NAME, "python")
+              + File.pathSeparator;
+
+      // add paths specified in Ghidrathon config
+      for (String path : ghidrathonConfig.getPythonIncludePaths()) {
+
+        paths += path + File.pathSeparator;
+      }
+
+      // configure Java names that will be ignored when importing from Python
+      for (String name : ghidrathonConfig.getJavaExcludeLibs()) {
+
+        ghidrathonClassEnquirer.addJavaExcludeLib(name);
+      }
+
+      // set the class loader with access to Ghidra scripting API
+      jepConfig.setClassLoader(ClassLoader.getSystemClassLoader());
+
+      // set class enquirer used to handle Java imports from Python
+      jepConfig.setClassEnquirer(ghidrathonClassEnquirer);
+
+      // configure Python includes Path
+      jepConfig.addIncludePaths(paths);
+
+      // add Python shared modules - these should be CPython modules for Jep to handle specially
+      for (String name : ghidrathonConfig.getPythonSharedModules()) {
+
+        jepConfig.addSharedModules(name);
+      }
+
+      // configure Jep stdout
+      if (ghidrathonConfig.getStdOut() != null) {
+
+        jepConfig.redirectStdout(
+            new WriterOutputStream(
+                ghidrathonConfig.getStdOut(), System.getProperty("file.encoding")) {
+
+              @Override
+              public void write(byte[] b, int off, int len) throws IOException {
+                super.write(b, off, len);
+                flush(); // flush the output to ensure it is displayed in real-time
+              }
+            });
+      }
+
+      // configure Jep stderr
+      if (ghidrathonConfig.getStdErr() != null) {
+        jepConfig.redirectStdErr(
+            new WriterOutputStream(
+                ghidrathonConfig.getStdErr(), System.getProperty("file.encoding")) {
+
+              @Override
+              public void write(byte[] b, int off, int len) throws IOException {
+                super.write(b, off, len);
+                flush(); // flush the error to ensure it is displayed in real-time
+              }
+            });
+      }
+
+      // we must set the native Jep library before creating a Jep instance
+      try {
+        setJepPaths();
+      } catch (Exception e) {
+        log.info("error setting JEP paths: " + e.toString());
+        return;
+      }
+
+      try {
+        // create a new Jep interpreter instance
+        jep = new jep.SubInterpreter(jepConfig);
+
+        // now that everything is configured, we should be able to run some utility scripts
+        // to help us further configure the Python environment
+        setJepEval();
+        setJepRunScript();
+        
+      } catch (Exception e) {
+        log.info("error creating JEP interpreter: " + e.toString());
+        return;
+      }
+    } catch (Exception e) {
+      log.info("error: " + e.toString());
+      return;
     }
-
-    // add data/python/ to Python includes directory
-    paths +=
-        Application.getModuleDataSubDirectory(GhidrathonUtils.THIS_EXTENSION_NAME, "python")
-            + File.pathSeparator;
-
-    // add paths specified in Ghidrathon config
-    for (String path : ghidrathonConfig.getPythonIncludePaths()) {
-
-      paths += path + File.pathSeparator;
-    }
-
-    // configure Java names that will be ignored when importing from Python
-    for (String name : ghidrathonConfig.getJavaExcludeLibs()) {
-
-      ghidrathonClassEnquirer.addJavaExcludeLib(name);
-    }
-
-    // set the class loader with access to Ghidra scripting API
-    jepConfig.setClassLoader(ClassLoader.getSystemClassLoader());
-
-    // set class enquirer used to handle Java imports from Python
-    jepConfig.setClassEnquirer(ghidrathonClassEnquirer);
-
-    // configure Python includes Path
-    jepConfig.addIncludePaths(paths);
-
-    // add Python shared modules - these should be CPython modules for Jep to handle specially
-    for (String name : ghidrathonConfig.getPythonSharedModules()) {
-
-      jepConfig.addSharedModules(name);
-    }
-
-    // configure Jep stdout
-    if (ghidrathonConfig.getStdOut() != null) {
-
-      jepConfig.redirectStdout(
-          new WriterOutputStream(
-              ghidrathonConfig.getStdOut(), System.getProperty("file.encoding")) {
-
-            @Override
-            public void write(byte[] b, int off, int len) throws IOException {
-              super.write(b, off, len);
-              flush(); // flush the output to ensure it is displayed in real-time
-            }
-          });
-    }
-
-    // configure Jep stderr
-    if (ghidrathonConfig.getStdErr() != null) {
-      jepConfig.redirectStdErr(
-          new WriterOutputStream(
-              ghidrathonConfig.getStdErr(), System.getProperty("file.encoding")) {
-
-            @Override
-            public void write(byte[] b, int off, int len) throws IOException {
-              super.write(b, off, len);
-              flush(); // flush the error to ensure it is displayed in real-time
-            }
-          });
-    }
-
-    // we must set the native Jep library before creating a Jep instance
-    setJepPaths();
-
-    // create a new Jep interpreter instance
-    jep = new jep.SubInterpreter(jepConfig);
-
-    // now that everything is configured, we should be able to run some utility scripts
-    // to help us further configure the Python environment
-    setJepEval();
-    setJepRunScript();
   }
-
-  private record JepLocation (Path dll, Path home) {};
 
   private PathMatcher getJepDllPathMatcher() throws Exception {
     String os = System.getProperty("os.name", "generic").toLowerCase(Locale.ENGLISH);
@@ -168,14 +188,12 @@ public class GhidrathonInterpreter {
     throw new Exception("OS not implemented: " + os);
   }
 
-  private JepLocation searchJep(Path path) {
-    JepLocation empty = new JepLocation(null, null);
-
+  private Path searchJepDll(Path path) {
     PathMatcher matcher;
     try {
       matcher = getJepDllPathMatcher();
     } catch (Exception e) {
-      return empty;
+      return null;
     }
 
     List<Path> dllPaths;
@@ -186,21 +204,20 @@ public class GhidrathonInterpreter {
               .collect(Collectors.toList());
 
     } catch (IOException e) {
-      return empty;
+      return null;
     }
 
     if (dllPaths.isEmpty()) {
-      return empty;
+      return null;
     }
 
     if (dllPaths.size() > 1) {
       // not sure which to pick
-      System.err.println("too many results in directory: " + path.toString());
-      return empty;
+      log.error("too many results in directory: " + path.toString());
+      return null;
     }
 
-    Path dll = dllPaths.stream().findFirst().get();
-    return new JepLocation(dll, path);
+    return dllPaths.stream().findFirst().get();
   }
 
   // DANGER: DO NOT PASS DYNAMIC COMMANDS HERE!
@@ -210,7 +227,7 @@ public class GhidrathonInterpreter {
     try {
       process = runtime.exec(commands);
     } catch (IOException e) {
-      System.err.println("error: " + e.toString());
+      log.error("error: " + e.toString());
       return "";
     }
 
@@ -221,43 +238,43 @@ public class GhidrathonInterpreter {
     String error = String.join("\n", errorReader.lines().collect(Collectors.toList()));
 
     if (error.length() > 0) {
-      System.err.println(">" + error + "<");
+      log.error(error);
     }
 
     return output;
   }
 
-  private JepLocation findPythonPathJep() {
+  private Path findPythonPathJep() {
     String var = "PYTHONPATH";
     String env = System.getenv(var);
     if (env != null) {
       for (String envv : env.split(";")) {
         Path path = java.nio.file.FileSystems.getDefault().getPath(envv);
-        JepLocation location = searchJep(path);
-        if (location.dll() != null) {
+        Path location = searchJepDll(path);
+        if (location != null) {
           // return first matching DLL
           return location;
         }
       }
     }
-    return new JepLocation(null, null);
+    return null;
   }
 
-  private JepLocation findVirtualEnvJep() {
+  private Path findVirtualEnvJep() {
     String var = "VIRTUAL_ENV";
     String env = System.getenv(var);
     if (env != null) {
       Path path = java.nio.file.FileSystems.getDefault().getPath(env);
-      JepLocation location = searchJep(path);
-      if (location.dll() != null) {
+      Path location = searchJepDll(path);
+      if (location != null) {
         // return only matching DLL
         return location;
       }
     }
-    return new JepLocation(null, null);
+    return null;
   }
 
-  private JepLocation findSystemJep() {
+  private Path findSystemJep() {
     String output = execCmd("python3", "-c", "import sys; import base64; print((b' '.join(map(lambda s: base64.b64encode(s.encode('utf-8')), sys.path))).decode('ascii'))");
 
     Charset UTF8_CHARSET = Charset.forName("UTF-8");
@@ -267,19 +284,18 @@ public class GhidrathonInterpreter {
       String s = new String(bytes, UTF8_CHARSET);
 
       Path path1 = java.nio.file.FileSystems.getDefault().getPath(s);
-      JepLocation location = searchJep(path1);
+      Path location = searchJepDll(path1);
 
-      if (location.dll() != null) {
-        // we don't know the PYTHONHOME from just this info
-        return new JepLocation(location.dll(), null);
+      if (location != null) {
+        return location;
       }
     }
 
-    return new JepLocation(null, null);
+    return null;
   }
 
   private void setJepDll(Path path) {
-    System.err.println("set JEP DLL: " + path.toString());
+    log.info("set JEP DLL: " + path.toString());
     try {
       MainInterpreter.setJepLibraryPath(path.toAbsolutePath().toString());
     } catch (IllegalStateException e) {
@@ -287,13 +303,6 @@ public class GhidrathonInterpreter {
       // we expect this to happen as Jep Maininterpreter
       // thread exists forever once it's created
     }
-  }
-
-  private void setJepPythonHome(Path path) {
-    System.err.println("set Python home: " + path.toString());
-    PyConfig pyConfig = new PyConfig();
-    pyConfig.setPythonHome(path.toAbsolutePath().toString());
-    MainInterpreter.setInitParams(pyConfig);
   }
 
   /**
@@ -308,34 +317,31 @@ public class GhidrathonInterpreter {
    */
   private void setJepPaths() throws JepException, FileNotFoundException {
     // if this is set, it take precedence over VIRTUAL_ENV.
-    JepLocation pythonPathJep = findPythonPathJep();
-    if (pythonPathJep.dll() != null) {
-      System.out.println("found JEP dll via PYTHONPATH: " + pythonPathJep.dll());
+    Path pythonPathJep = findPythonPathJep();
+    if (pythonPathJep != null) {
+      log.info("found JEP dll via PYTHONPATH: " + pythonPathJep);
     }
 
     // if this is set, it takes precedence over system python
-    JepLocation virtualenvJep = findVirtualEnvJep();
-    if (virtualenvJep.dll() != null) {
-      System.out.println("found JEP dll via VIRTUAL_ENV: " + virtualenvJep.dll());
+    Path virtualenvJep = findVirtualEnvJep();
+    if (virtualenvJep != null) {
+      log.info("found JEP dll via VIRTUAL_ENV: " + virtualenvJep);
     }
 
     // fall back to whatever python3 references
-    JepLocation systemJep = findSystemJep();
-    if (systemJep.dll() != null) {
-        System.out.println("found JEP dll via python3: " + systemJep.dll());
+    Path systemJep = findSystemJep();
+    if (systemJep != null) {
+        log.info("found JEP dll via python3: " + systemJep);
     }
 
-    if (pythonPathJep.dll() != null) {
-      setJepDll(pythonPathJep.dll());
-      setJepPythonHome(pythonPathJep.home());
-    } else if (virtualenvJep.dll() != null) {
-      setJepDll(virtualenvJep.dll());
-      setJepPythonHome(virtualenvJep.home());
-    } else if (systemJep.dll() != null) {
-      setJepDll(systemJep.dll());
-      // we don't know home!
+    if (pythonPathJep != null) {
+      setJepDll(pythonPathJep);
+    } else if (virtualenvJep != null) {
+      setJepDll(virtualenvJep);
+    } else if (systemJep != null) {
+      setJepDll(systemJep);
     } else {
-      System.out.println("unable to find jep");
+      log.error("unable to find jep");
     }
   }
 
