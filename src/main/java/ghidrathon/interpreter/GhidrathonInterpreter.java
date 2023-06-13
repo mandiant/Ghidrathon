@@ -65,7 +65,6 @@ public class GhidrathonInterpreter {
    * @throws IOException
    */
   private GhidrathonInterpreter(GhidrathonConfig config) throws JepException, IOException {
-    log.info("GhidrathonInterpreter constructor 1");
 
     try {
       ghidrathonConfig = config;
