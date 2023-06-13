@@ -10,6 +10,19 @@
 
 package ghidrathon.interpreter;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
+import java.util.List;
+import java.util.Locale;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+
 import generic.jar.ResourceFile;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.script.GhidraScriptUtil;
@@ -26,6 +39,7 @@ import jep.Jep;
 import jep.JepConfig;
 import jep.JepException;
 import jep.MainInterpreter;
+import jep.PyConfig;
 import org.apache.commons.io.output.WriterOutputStream;
 
 /** Utility class used to configure a Jep instance to access Ghidra */
@@ -118,7 +132,7 @@ public class GhidrathonInterpreter {
     }
 
     // we must set the native Jep library before creating a Jep instance
-    setJepNativeBinaryPath();
+    setJepPaths();
 
     // create a new Jep interpreter instance
     jep = new jep.SubInterpreter(jepConfig);
@@ -127,6 +141,159 @@ public class GhidrathonInterpreter {
     // to help us further configure the Python environment
     setJepEval();
     setJepRunScript();
+  }
+
+  private record JepLocation (Path dll, Path home) {};
+
+  private PathMatcher getJepDllPathMatcher() throws Exception {
+    String os = System.getProperty("os.name", "generic").toLowerCase(Locale.ENGLISH);
+    if ((os.indexOf("mac") >= 0) || (os.indexOf("darwin") >= 0)) {
+      String arch = System.getProperty("os.arch");
+      if (arch == "amd64") {
+        // x86
+        return FileSystems.getDefault().getPathMatcher("glob:**libjep.so");
+      } else if (arch == "arm64") {
+        // arm m1
+        // TODO: just guessing this arch name arm64
+        return FileSystems.getDefault().getPathMatcher("glob:**libjep.jnilib");
+      }
+    } else if (os.indexOf("win") >= 0) {
+        return FileSystems.getDefault().getPathMatcher("glob:**jep.dll");
+    } else if (os.indexOf("nux") >= 0) {
+        return FileSystems.getDefault().getPathMatcher("glob:**libjep.so");
+    } else {
+        throw new Exception("OS not implemented: " + os);
+    }
+
+    throw new Exception("OS not implemented: " + os);
+  }
+
+  private JepLocation searchJep(Path path) {
+    JepLocation empty = new JepLocation(null, null);
+
+    PathMatcher matcher;
+    try {
+      matcher = getJepDllPathMatcher();
+    } catch (Exception e) {
+      return empty;
+    }
+
+    List<Path> dllPaths;
+    try (Stream<Path> walk = Files.walk(path)) {
+      dllPaths = walk
+              .filter(Files::isRegularFile)
+              .filter(x -> matcher.matches(x))
+              .collect(Collectors.toList());
+
+    } catch (IOException e) {
+      return empty;
+    }
+
+    if (dllPaths.isEmpty()) {
+      return empty;
+    }
+
+    if (dllPaths.size() > 1) {
+      // not sure which to pick
+      System.err.println("too many results in directory: " + path.toString());
+      return empty;
+    }
+
+    Path dll = dllPaths.stream().findFirst().get();
+    return new JepLocation(dll, path);
+  }
+
+  // DANGER: DO NOT PASS DYNAMIC COMMANDS HERE!
+  private String execCmd(String ... commands) {
+    Runtime runtime = Runtime.getRuntime();
+    Process process = null;
+    try {
+      process = runtime.exec(commands);
+    } catch (IOException e) {
+      System.err.println("error: " + e.toString());
+      return "";
+    }
+
+    BufferedReader lineReader = new BufferedReader(new java.io.InputStreamReader(process.getInputStream()));
+    String output = String.join("\n", lineReader.lines().collect(Collectors.toList()));
+
+    BufferedReader errorReader = new BufferedReader(new java.io.InputStreamReader(process.getErrorStream()));
+    String error = String.join("\n", errorReader.lines().collect(Collectors.toList()));
+
+    if (error.length() > 0) {
+      System.err.println(">" + error + "<");
+    }
+
+    return output;
+  }
+
+  private JepLocation findPythonPathJep() {
+    String var = "PYTHONPATH";
+    String env = System.getenv(var);
+    if (env != null) {
+      for (String envv : env.split(";")) {
+        Path path = java.nio.file.FileSystems.getDefault().getPath(envv);
+        JepLocation location = searchJep(path);
+        if (location.dll() != null) {
+          // return first matching DLL
+          return location;
+        }
+      }
+    }
+    return new JepLocation(null, null);
+  }
+
+  private JepLocation findVirtualEnvJep() {
+    String var = "VIRTUAL_ENV";
+    String env = System.getenv(var);
+    if (env != null) {
+      Path path = java.nio.file.FileSystems.getDefault().getPath(env);
+      JepLocation location = searchJep(path);
+      if (location.dll() != null) {
+        // return only matching DLL
+        return location;
+      }
+    }
+    return new JepLocation(null, null);
+  }
+
+  private JepLocation findSystemJep() {
+    String output = execCmd("python3", "-c", "import sys; import base64; print((b' '.join(map(lambda s: base64.b64encode(s.encode('utf-8')), sys.path))).decode('ascii'))");
+
+    Charset UTF8_CHARSET = Charset.forName("UTF-8");
+
+    for (String base64 : output.split(" ")) {
+      byte[] bytes = java.util.Base64.getDecoder().decode(base64);
+      String s = new String(bytes, UTF8_CHARSET);
+
+      Path path1 = java.nio.file.FileSystems.getDefault().getPath(s);
+      JepLocation location = searchJep(path1);
+
+      if (location.dll() != null) {
+        // we don't know the PYTHONHOME from just this info
+        return new JepLocation(location.dll(), null);
+      }
+    }
+
+    return new JepLocation(null, null);
+  }
+
+  private void setJepDll(Path path) {
+    System.err.println("set JEP DLL: " + path.toString());
+    try {
+      MainInterpreter.setJepLibraryPath(path.toAbsolutePath().toString());
+    } catch (IllegalStateException e) {
+      // library path has already been set elsewhere, 
+      // we expect this to happen as Jep Maininterpreter
+      // thread exists forever once it's created
+    }
+  }
+
+  private void setJepPythonHome(Path path) {
+    System.err.println("set Python home: " + path.toString());
+    PyConfig pyConfig = new PyConfig();
+    pyConfig.setPythonHome(path.toAbsolutePath().toString());
+    MainInterpreter.setInitParams(pyConfig);
   }
 
   /**
@@ -139,28 +306,36 @@ public class GhidrathonInterpreter {
    * @throws JepException
    * @throws FileNotFoundException
    */
-  private void setJepNativeBinaryPath() throws JepException, FileNotFoundException {
-
-    File nativeJep;
-
-    try {
-
-      nativeJep = Application.getOSFile(GhidrathonUtils.THIS_EXTENSION_NAME, "libjep.so");
-
-    } catch (FileNotFoundException e) {
-
-      // whoops try Windows
-      nativeJep = Application.getOSFile(GhidrathonUtils.THIS_EXTENSION_NAME, "jep.dll");
+  private void setJepPaths() throws JepException, FileNotFoundException {
+    // if this is set, it take precedence over VIRTUAL_ENV.
+    JepLocation pythonPathJep = findPythonPathJep();
+    if (pythonPathJep.dll() != null) {
+      System.out.println("found JEP dll via PYTHONPATH: " + pythonPathJep.dll());
     }
 
-    try {
+    // if this is set, it takes precedence over system python
+    JepLocation virtualenvJep = findVirtualEnvJep();
+    if (virtualenvJep.dll() != null) {
+      System.out.println("found JEP dll via VIRTUAL_ENV: " + virtualenvJep.dll());
+    }
 
-      MainInterpreter.setJepLibraryPath(nativeJep.getAbsolutePath());
+    // fall back to whatever python3 references
+    JepLocation systemJep = findSystemJep();
+    if (systemJep.dll() != null) {
+        System.out.println("found JEP dll via python3: " + systemJep.dll());
+    }
 
-    } catch (IllegalStateException e) {
-      // library path has already been set elsewhere, we expect this to happen as Jep
-      // Maininterpreter
-      // thread exists forever once it's created
+    if (pythonPathJep.dll() != null) {
+      setJepDll(pythonPathJep.dll());
+      setJepPythonHome(pythonPathJep.home());
+    } else if (virtualenvJep.dll() != null) {
+      setJepDll(virtualenvJep.dll());
+      setJepPythonHome(virtualenvJep.home());
+    } else if (systemJep.dll() != null) {
+      setJepDll(systemJep.dll());
+      // we don't know home!
+    } else {
+      System.out.println("unable to find jep");
     }
   }
 
