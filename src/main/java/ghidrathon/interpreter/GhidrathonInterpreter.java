@@ -67,102 +67,86 @@ public class GhidrathonInterpreter {
   private GhidrathonInterpreter(GhidrathonConfig config) throws JepException, IOException {
     log.info("GhidrathonInterpreter constructor 1");
 
-    try {
-      ghidrathonConfig = config;
+    ghidrathonConfig = config;
 
-      // configure the Python includes path with the user's Ghdira script directory
-      String paths = "";
-      for (ResourceFile resourceFile : GhidraScriptUtil.getScriptSourceDirectories()) {
+    // configure the Python includes path with the user's Ghdira script directory
+    String paths = "";
+    for (ResourceFile resourceFile : GhidraScriptUtil.getScriptSourceDirectories()) {
 
-        paths += resourceFile.getFile(false).getAbsolutePath() + File.pathSeparator;
-      }
-
-      // add data/python/ to Python includes directory
-      paths +=
-          Application.getModuleDataSubDirectory(GhidrathonUtils.THIS_EXTENSION_NAME, "python")
-              + File.pathSeparator;
-
-      // add paths specified in Ghidrathon config
-      for (String path : ghidrathonConfig.getPythonIncludePaths()) {
-
-        paths += path + File.pathSeparator;
-      }
-
-      // configure Java names that will be ignored when importing from Python
-      for (String name : ghidrathonConfig.getJavaExcludeLibs()) {
-
-        ghidrathonClassEnquirer.addJavaExcludeLib(name);
-      }
-
-      // set the class loader with access to Ghidra scripting API
-      jepConfig.setClassLoader(ClassLoader.getSystemClassLoader());
-
-      // set class enquirer used to handle Java imports from Python
-      jepConfig.setClassEnquirer(ghidrathonClassEnquirer);
-
-      // configure Python includes Path
-      jepConfig.addIncludePaths(paths);
-
-      // add Python shared modules - these should be CPython modules for Jep to handle specially
-      for (String name : ghidrathonConfig.getPythonSharedModules()) {
-
-        jepConfig.addSharedModules(name);
-      }
-
-      // configure Jep stdout
-      if (ghidrathonConfig.getStdOut() != null) {
-
-        jepConfig.redirectStdout(
-            new WriterOutputStream(
-                ghidrathonConfig.getStdOut(), System.getProperty("file.encoding")) {
-
-              @Override
-              public void write(byte[] b, int off, int len) throws IOException {
-                super.write(b, off, len);
-                flush(); // flush the output to ensure it is displayed in real-time
-              }
-            });
-      }
-
-      // configure Jep stderr
-      if (ghidrathonConfig.getStdErr() != null) {
-        jepConfig.redirectStdErr(
-            new WriterOutputStream(
-                ghidrathonConfig.getStdErr(), System.getProperty("file.encoding")) {
-
-              @Override
-              public void write(byte[] b, int off, int len) throws IOException {
-                super.write(b, off, len);
-                flush(); // flush the error to ensure it is displayed in real-time
-              }
-            });
-      }
-
-      // we must set the native Jep library before creating a Jep instance
-      try {
-        setJepPaths();
-      } catch (Exception e) {
-        log.info("error setting JEP paths: " + e.toString());
-        return;
-      }
-
-      try {
-        // create a new Jep interpreter instance
-        jep = new jep.SubInterpreter(jepConfig);
-
-        // now that everything is configured, we should be able to run some utility scripts
-        // to help us further configure the Python environment
-        setJepEval();
-        setJepRunScript();
-        
-      } catch (Exception e) {
-        log.info("error creating JEP interpreter: " + e.toString());
-        return;
-      }
-    } catch (Exception e) {
-      log.info("error: " + e.toString());
-      return;
+      paths += resourceFile.getFile(false).getAbsolutePath() + File.pathSeparator;
     }
+
+    // add data/python/ to Python includes directory
+    paths +=
+        Application.getModuleDataSubDirectory(GhidrathonUtils.THIS_EXTENSION_NAME, "python")
+            + File.pathSeparator;
+
+    // add paths specified in Ghidrathon config
+    for (String path : ghidrathonConfig.getPythonIncludePaths()) {
+
+      paths += path + File.pathSeparator;
+    }
+
+    // configure Java names that will be ignored when importing from Python
+    for (String name : ghidrathonConfig.getJavaExcludeLibs()) {
+
+      ghidrathonClassEnquirer.addJavaExcludeLib(name);
+    }
+
+    // set the class loader with access to Ghidra scripting API
+    jepConfig.setClassLoader(ClassLoader.getSystemClassLoader());
+
+    // set class enquirer used to handle Java imports from Python
+    jepConfig.setClassEnquirer(ghidrathonClassEnquirer);
+
+    // configure Python includes Path
+    jepConfig.addIncludePaths(paths);
+
+    // add Python shared modules - these should be CPython modules for Jep to handle specially
+    for (String name : ghidrathonConfig.getPythonSharedModules()) {
+
+      jepConfig.addSharedModules(name);
+    }
+
+    // configure Jep stdout
+    if (ghidrathonConfig.getStdOut() != null) {
+
+      jepConfig.redirectStdout(
+          new WriterOutputStream(
+              ghidrathonConfig.getStdOut(), System.getProperty("file.encoding")) {
+
+            @Override
+            public void write(byte[] b, int off, int len) throws IOException {
+              super.write(b, off, len);
+              flush(); // flush the output to ensure it is displayed in real-time
+            }
+          });
+    }
+
+    // configure Jep stderr
+    if (ghidrathonConfig.getStdErr() != null) {
+      jepConfig.redirectStdErr(
+          new WriterOutputStream(
+              ghidrathonConfig.getStdErr(), System.getProperty("file.encoding")) {
+
+            @Override
+            public void write(byte[] b, int off, int len) throws IOException {
+              super.write(b, off, len);
+              flush(); // flush the error to ensure it is displayed in real-time
+            }
+          });
+    }
+
+    // we must set the native Jep library before creating a Jep instance
+    setJepPaths();
+
+    // create a new Jep interpreter instance
+    jep = new jep.SubInterpreter(jepConfig);
+
+    // now that everything is configured, we should be able to run some utility scripts
+    // to help us further configure the Python environment
+    setJepEval();
+    setJepRunScript();
   }
 
   private PathMatcher getJepDllPathMatcher() throws Exception {
