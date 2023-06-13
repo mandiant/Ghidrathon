@@ -10,19 +10,6 @@
 
 package ghidrathon.interpreter;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.PathMatcher;
-import java.util.List;
-import java.util.Locale;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-
 import generic.jar.ResourceFile;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.script.GhidraScriptUtil;
@@ -31,17 +18,27 @@ import ghidrathon.GhidrathonClassEnquirer;
 import ghidrathon.GhidrathonConfig;
 import ghidrathon.GhidrathonScript;
 import ghidrathon.GhidrathonUtils;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.IOException;
 import java.lang.reflect.*;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
+import java.util.List;
+import java.util.Locale;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import jep.Jep;
 import jep.JepConfig;
 import jep.JepException;
 import jep.MainInterpreter;
 import jep.PyConfig;
 import org.apache.commons.io.output.WriterOutputStream;
-
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 
