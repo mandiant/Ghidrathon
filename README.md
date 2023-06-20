@@ -135,6 +135,7 @@ Ghidrathon disables the built-in Jython script provider to avoid conflicts when 
 
 Use the following steps to disable the Jython extension:
 
+* Open a CodeBrowser window (*not the Project Manager window*)
 * Navigate to `File > Configure...`
 * Click `Ghidra Core`
 * Un-check `PythonPlugin`
