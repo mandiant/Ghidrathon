@@ -26,6 +26,7 @@ import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.util.Collections;
 import java.util.List;
 import javax.swing.*;
 
@@ -113,7 +114,7 @@ public class GhidrathonPlugin extends ProgramPlugin
   @Override
   public List<CodeCompletion> getCompletions(String cmd) {
     // TODO Auto-generated method stub
-    return null;
+    return Collections.<CodeCompletion>emptyList();
   }
 
   private void resetInterpreter() {
