@@ -10,4 +10,4 @@
 
 
 def jep_set_builtin(attr, o):
-    setattr(__builtins__, attr, o)
+    __builtins__[attr] = o
