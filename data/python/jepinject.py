@@ -26,5 +26,5 @@ for attr in dir(__ghidra_script__):
         continue
 
     o = getattr(__ghidra_script__, attr)
-    if callable(o) and attr not in dir(__builtins__):
-        setattr(__builtins__, attr, o)
+    if callable(o) and attr not in __builtins__:
+        __builtins__[attr] = o
