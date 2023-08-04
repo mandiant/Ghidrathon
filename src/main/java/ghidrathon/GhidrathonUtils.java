@@ -26,7 +26,7 @@ public class GhidrathonUtils {
 
   private static final String DEFAULT_CONFIG_FILENAME = "GhidrathonConfig.xml";
   private static final String JAVA_EXCLUDE_LIBS_KEY = "JAVA_EXCLUDE_LIBS";
-  private static final String PY_SHARED_MODULES_KEY = "PYTHON_SHARED_MODULES";
+  private static final String PY_EXECUTABLE_KEY = "PYTHON_EXECUTABLE";
   private static final String PY_INCLUDE_PATHS_KEY = "PYTHON_INCLUDE_PATHS";
 
   /**
@@ -86,12 +86,12 @@ public class GhidrathonUtils {
       config.addPythonIncludePath(name);
     }
 
-    // add Python shared modules - these modules are handled specially by Jep to avoid crashes
-    // caused
-    // by CPython extensions, e.g. numpy
-    for (String name : state.getStrings(PY_SHARED_MODULES_KEY, new String[0])) {
+    // add Python executable if user configures it
+    String name = state.getString(PY_EXECUTABLE_KEY, "");
 
-      config.addPythonSharedModule(name);
+    if (!name.isEmpty()) {
+
+      config.addPyExecutable(name);
     }
 
     return config;

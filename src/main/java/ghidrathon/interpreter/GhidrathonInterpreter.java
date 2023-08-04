@@ -119,7 +119,7 @@ public class GhidrathonInterpreter {
   }
 
   /** Extends Python sys.path to include Ghidra script source directories */
-  private void setSysPath() {
+  private void setPySys() {
     String paths = "";
 
     for (ResourceFile resourceFile : GhidraScriptUtil.getScriptSourceDirectories()) {
@@ -133,6 +133,11 @@ public class GhidrathonInterpreter {
             + "'.split('"
             + File.pathSeparator
             + "') if path not in sys.path])");
+
+    String executable = config.getPyExecutable();
+    if (!executable.isEmpty()) {
+      jep_.eval("sys.executable='" + executable + "'");
+    }
   }
 
   /**
@@ -330,7 +335,7 @@ public class GhidrathonInterpreter {
 
     try {
 
-      setSysPath();
+      setPySys();
       setStreams();
 
       return (boolean) jep_.invoke("jepeval", line);
@@ -368,7 +373,7 @@ public class GhidrathonInterpreter {
 
     try {
 
-      setSysPath();
+      setPySys();
       setStreams();
 
       return (boolean) jep_.invoke("jepeval", line);
@@ -392,7 +397,7 @@ public class GhidrathonInterpreter {
 
     try {
 
-      setSysPath();
+      setPySys();
       setStreams();
 
       jep_.invoke("jep_runscript", file.getAbsolutePath());
@@ -420,7 +425,7 @@ public class GhidrathonInterpreter {
 
       injectScriptHierarchy(script);
 
-      setSysPath();
+      setPySys();
       setStreams();
 
       jep_.invoke("jep_runscript", file.getAbsolutePath());

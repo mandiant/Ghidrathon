@@ -26,7 +26,7 @@ public class GhidrathonConfig {
 
   private final List<String> javaExcludeLibs = new ArrayList<String>();
   private final List<String> pyIncludePaths = new ArrayList<String>();
-  private final List<String> pySharedModules = new ArrayList<String>();
+  private String pyExecutable = new String();
 
   private PrintWriter out = null;
   private PrintWriter err = null;
@@ -47,16 +47,12 @@ public class GhidrathonConfig {
     return err;
   }
 
-  public void addPythonSharedModule(String name) {
-    pySharedModules.add(name);
+  public void addPyExecutable(String path) {
+    pyExecutable = path;
   }
 
-  public void addPythonSharedModules(List<String> names) {
-    pySharedModules.addAll(names);
-  }
-
-  public Iterable<String> getPythonSharedModules() {
-    return Collections.unmodifiableList(pySharedModules);
+  public String getPyExecutable() {
+    return pyExecutable;
   }
 
   public void addJavaExcludeLib(String name) {
