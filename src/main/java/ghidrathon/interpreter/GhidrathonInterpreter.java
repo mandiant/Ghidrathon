@@ -128,7 +128,7 @@ public class GhidrathonInterpreter {
 
     jep_.eval("import sys");
     jep_.eval(
-        "sys.path.extend([path for path in '"
+        "sys.path.extend([path for path in r'"
             + paths
             + "'.split('"
             + File.pathSeparator
