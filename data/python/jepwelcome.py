@@ -32,8 +32,8 @@ def format_version():
     return "%d.%d.%d" % sys.version_info[:3]
 
 
-# Assume GhidraVersion passed from Java to Python before execution
+# Assume __ghidra_version__ passed from Java to Python before execution
 
-print(message % (format_version(), GhidraVersion))
+print(message % (format_version(), __ghidra_version__))
 
-del GhidraVersion
+del __ghidra_version__

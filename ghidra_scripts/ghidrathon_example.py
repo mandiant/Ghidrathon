@@ -13,17 +13,17 @@
 from ghidra.program.model.block import SimpleBlockIterator
 from ghidra.program.model.block import BasicBlockModel
 
-for func in currentProgram.getListing().getFunctions(True):
+for func in currentProgram().getListing().getFunctions(True):
     block_count = 0
 
     # find basic block count for the current function
-    block_itr = SimpleBlockIterator(BasicBlockModel(currentProgram), func.getBody(), monitor)
+    block_itr = SimpleBlockIterator(BasicBlockModel(currentProgram()), func.getBody(), monitor())
     while block_itr.hasNext():
         block_count += 1
         block_itr.next()
 
     # find instruction count for the current function
-    insn_count = len(tuple(currentProgram.getListing().getInstructions(func.getBody(), True)))
+    insn_count = len(tuple(currentProgram().getListing().getInstructions(func.getBody(), True)))
 
     # print counts to user
     print(
