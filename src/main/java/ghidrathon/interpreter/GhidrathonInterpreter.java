@@ -74,6 +74,10 @@ public class GhidrathonInterpreter {
     // now that everything is configured, we should be able to run some utility scripts
     // to help us further configure the Python environment
     setJepWrappers();
+
+    jep_.invoke("jepwrappers.init_state");
+    jep_.invoke("jepwrappers.set_streams", this.out, this.err);
+ 
     setJepEval();
     setJepRunScript();
   }
@@ -216,35 +220,6 @@ public class GhidrathonInterpreter {
   }
 
   /**
-   * Configure state for wrappers in Python land.
-   *
-   * <p>This exposes state including currentProgram, currentAddress, etc. similar to Jython. We need
-   * to repeat this prior to executing new Python code in order to provide the latest state e.g.
-   * that current currentAddress.
-   *
-   * @throws JepException
-   */
-  private void setJepWrappersState() throws JepException {
-
-    jep_.invoke("jepwrappers.__set_state__", null, this.out, this.err);
-  }
-
-  /**
-   * Configure state for wrappers in Python land.
-   *
-   * <p>This exposes state including currentProgram, currentAddress, etc. similar to Jython. We need
-   * to repeat this prior to executing new Python code in order to provide the latest state e.g.
-   * that current currentAddress.
-   *
-   * @param script GhidrathonScript instance
-   * @throws JepException
-   */
-  private void setJepWrappersState(GhidraScript script) throws JepException {
-
-    jep_.invoke("jepwrappers.__set_state__", script, this.out, this.err);
-  }
-
-  /**
    * Create a new GhidrathonInterpreter instance.
    *
    * @return GhidrathonInterpreter
@@ -275,7 +250,7 @@ public class GhidrathonInterpreter {
     try {
 
       if (jep_ != null) {
-        jep_.invoke("jepwrappers.__unset_state__");
+        jep_.invoke("jepwrappers.remove_state");
         jep_.close();
 
         jep_ = null;
@@ -320,7 +295,6 @@ public class GhidrathonInterpreter {
 
     try {
 
-      setJepWrappersState();
       extendPythonSysPath();
 
       return (boolean) jep_.invoke("jepeval", line);
@@ -346,7 +320,7 @@ public class GhidrathonInterpreter {
 
     try {
 
-      setJepWrappersState(script);
+      jep_.invoke("jepwrappers.set_script", script);
       extendPythonSysPath();
 
       return (boolean) jep_.invoke("jepeval", line);
@@ -370,7 +344,6 @@ public class GhidrathonInterpreter {
 
     try {
 
-      setJepWrappersState();
       extendPythonSysPath();
 
       jep_.invoke("jep_runscript", file.getAbsolutePath());
@@ -395,7 +368,7 @@ public class GhidrathonInterpreter {
 
     try {
 
-      setJepWrappersState(script);
+      jep_.invoke("jepwrappers.set_script", script);
       extendPythonSysPath();
 
       jep_.invoke("jep_runscript", file.getAbsolutePath());
@@ -416,7 +389,7 @@ public class GhidrathonInterpreter {
           Application.getModuleDataFile(
               GhidrathonUtils.THIS_EXTENSION_NAME, "python/jepwelcome.py");
 
-      jep_.set("__ghidra_version__", Application.getApplicationVersion());
+      jep_.set("ghidra_version", Application.getApplicationVersion());
 
       runScript(file);
 

@@ -5,147 +5,283 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-
-__cache_key__ = "__ghidrathon_cached_state__"
-__ghidrathon_flatapi_wrapper_stub_template__ = """@__ghidrathon_flatapi_wrapper__\ndef %s(*args, **kwargs): ..."""
-
-
-class __GhidrathonCachedState__(object):
-    def __init__(self, script, stdout, stderr):
-        self.script = script
-        self.stdout = stdout
-        self.stderr = stderr
+import sys
+import abc
+import io
+import os
 
 
-def __get_java_thread__():
+cache_key = "ghidrathon_cache"
+flatprogramapi_wrapper_stub = """@flatprogramapi_wrapper\ndef %s(*args, **kwargs): ..."""
+
+
+class GhidrathonCachedStream:
+    def __init__(self, stream, closed=False):
+        self.stream = stream
+        self.closed = closed
+
+
+class GhidrathonCachedGhidraState:
+    def __init__(self):
+        self.script = None
+        self.stdout = None
+        self.stderr = None
+
+
+def get_java_thread_id():
     from java.lang import Thread
 
     return Thread.currentThread().getId()
 
 
-def __get_cache__():
-    cache = __builtins__.get(__cache_key__, None)
+def get_cache():
+    cache = __builtins__.get(cache_key, None)
     if cache is None:
-        raise RuntimeError("__builtins__ key %s does not exist!" % __cache_key__)
+        raise RuntimeError("__builtins__ key %s does not exist" % cache_key)
 
     return cache
 
 
-def __get_cached_state__():
-    cache = __get_cache__()
-
-    state = cache.get(__get_java_thread__(), None)
+def get_state():
+    state = get_cache().get(get_java_thread_id(), None)
     if state is None:
-        raise RuntimeError("__builtins__[%s] key %s does not exist!" % (__cache_key__, __get_java_thread__()))
+        raise RuntimeError("__builtins__[%s] key %s does not exist" % (cache_key, get_java_thread_id()))
 
     return state
 
 
-def __get_cached_state_script__():
-    script = __get_cached_state__()
+def get_script():
+    script = get_state().script
     if script is None:
-        raise RuntimeError("GhidraScript is None!")
-    return script.script
+        raise RuntimeError("GhidraScript not set")
+
+    return script
 
 
-def __get_cached_state_script_state__():
-    state = __get_cached_state_script__().getState()
+def get_script_state():
+    state = get_script().getState()
     if state is None:
-        raise RuntimeError("GhidraState is None!")
+        raise RuntimeError("GhidraState not set")
 
     return state
 
 
-def __set_state__(script, stdout, stderr):
-    """set the GhidraScript object for the current Java thread"""
-    __builtins__[__cache_key__][__get_java_thread__()] = __GhidrathonCachedState__(script, stdout, stderr)
+def get_stdout():
+    stdout = get_state().stdout
+    if stdout is None:
+        raise RuntimeError("stdout not set")
+
+    return stdout
 
 
-def __unset_state__():
-    """unset the GhidraScript object for the current Java thread"""
-    cache = __get_cache__()
-    del cache[__get_java_thread__()]
+def get_stderr():
+    stderr = get_state().stderr
+    if stderr is None:
+        raise RuntimeError("stderr not set")
+
+    return stderr
 
 
-def __ghidrathon_flatapi_wrapper__(func):
+def init_state():
+    __builtins__[cache_key][get_java_thread_id()] = GhidrathonCachedGhidraState()
+
+
+def set_script(script):
+    get_state().script = script
+
+
+def set_streams(stdout, stderr):
+    get_state().stdout = GhidrathonCachedStream(stdout)
+    get_state().stderr = GhidrathonCachedStream(stderr)
+
+
+def remove_state():
+    del get_cache()[get_java_thread_id()]
+
+
+def flatprogramapi_wrapper(api):
     def wrapped(*args, **kwargs):
-        return getattr(__get_cached_state_script__(), func.__name__)(*args, **kwargs)
+        return getattr(get_script(), api.__name__)(*args, **kwargs)
 
     return wrapped
 
 
-def __ghidrathon_monitor_wrapper__():
-    return __get_cached_state_script__().getMonitor()
+class GhidrathonTextIOWrapperBase(abc.ABC):
+    @abc.abstractproperty
+    def __stream__(self):
+        ...
+
+    @abc.abstractproperty
+    def name(self):
+        ...
+
+    @abc.abstractproperty
+    def closed(self):
+        ...
+
+    @abc.abstractmethod
+    def fileno(self):
+        ...
+
+    @property
+    def line_buffering(self):
+        """If line_buffering is True, flush() is implied when a call to write contains a newline character or a carriage return."""
+        return True
+
+    @property
+    def write_through(self):
+        """If write_through is True, calls to write() are guaranteed not to be buffered: any data written on the TextIOWrapper object is immediately handled to its underlying binary buffer."""
+        return False
+
+    @property
+    def encoding(self):
+        return sys.getdefaultencoding()
+
+    @property
+    def errors(self):
+        """Pass 'strict' to raise a ValueError exception if there is an encoding error (the default of None has the same effect)"""
+        return "strict"
+
+    @property
+    def mode(self):
+        return "w"
+
+    @property
+    def newlines(self):
+        raise io.UnsupportedOperation
+
+    @property
+    def buffer(self):
+        raise io.UnsupportedOperation
+
+    def isatty(self):
+        return False
+
+    def writable(self):
+        return True
+
+    def writelines(self, lines):
+        if self.closed:
+            raise ValueError("stream closed")
+
+        for line in lines:
+            self.write(line)
+
+    def write(self, text):
+        if self.closed:
+            raise ValueError("stream closed")
+
+        num_chars = self.__stream__.write(text)
+
+        if self.line_buffering:
+            if "\r" in text or "\n" in text:
+                self.flush()
+
+        return num_chars
+
+    def flush(self):
+        if self.closed:
+            raise ValueError("stream closed")
+
+        self.__stream__.flush()
+
+    def close(self):
+        if self.closed:
+            return
+
+        self.flush()
+        self.closed = True
+
+    def fileno(self):
+        """Return the underlying file descriptor (an integer) of the stream if it exists. An OSError is raised if the IO object does not use a file descriptor."""
+        raise OSError("operation not supported")
+
+    def seekable(self):
+        """Return True if the stream supports random access. If False, seek(), tell() and truncate() will raise OSError."""
+        return False
+
+    def seek(*args, **kwargs):
+        raise OSError("operation not supported")
+
+    def tell(*args, **kwargs):
+        raise OSError("operation not supported")
+
+    def truncate(*args, **kwargs):
+        raise OSError("operation not supported")
+
+    def readable(self):
+        """Return True if the stream can be read from. If False, read() will raise OSError."""
+        return False
+
+    def read(*args, **kwargs):
+        raise OSError("operation not supported")
+
+    def readline(*args, **kwargs):
+        raise OSError("operation not supported")
+
+    def readlines(*args, **kwwargs):
+        raise OSError("operation not supported")
+
+    def reconfigure(*args, **kwargs):
+        raise io.UnsupportedOperation
+
+    def detach(*args, **kwargs):
+        raise io.UnsupportedOperation
 
 
-def __ghidrathon_currentProgram_wrapper__():
-    return __get_cached_state_script_state__().getCurrentProgram()
+class GhidrathonStdoutWrapper(GhidrathonTextIOWrapperBase):
+    @property
+    def name(self):
+        return "<stdout>"
+
+    @property
+    def __stream__(self):
+        stream = get_stdout().stream
+        if stream is None:
+            raise RuntimeError("%s not set" % self.name)
+        return stream
+
+    @property
+    def closed(self):
+        return get_stdout().closed
+
+    @closed.setter
+    def closed(self, v):
+        get_stdout().closed = v
+
+    def fileno(self):
+        return 1
 
 
-def __ghidrathon_currentAddress_wrapper__():
-    return __get_cached_state_script_state__().getCurrentAddress()
+class GhidrathonStderrWrapper(GhidrathonTextIOWrapperBase):
+    @property
+    def name(self):
+        return "<stderr>"
+
+    @property
+    def __stream__(self):
+        stream = get_stderr().stream
+        if stream is None:
+            raise RuntimeError("%s not set" % self.name)
+        return stream
+
+    @property
+    def closed(self):
+        return get_stderr().closed
+
+    @closed.setter
+    def closed(self, v):
+        get_stderr().closed = v
+
+    def fileno(self):
+        return 2
 
 
-def __ghidrathon_currentLocation_wrapper__():
-    return __get_cached_state_script_state__().getCurrentLocation()
+sys.stdout = GhidrathonStdoutWrapper()
+sys.stderr = GhidrathonStderrWrapper()
 
 
-def __ghidrathon_currentSelection_wrapper__():
-    return __get_cached_state_script_state__().getCurrentSelection()
-
-
-def __ghidrathon_currentHighlight_wrapper__():
-    return __get_cached_state_script_state__().getCurrentHighlight()
-
-
-def __ghidrathon_stdout_writer_wrapper__(*args, **kwargs):
-    state = __get_cached_state__()
-    if state.stdout is None:
-        raise RuntimeError("GhidraScript stdout is None!")
-
-    return state.stdout.write(*args, **kwargs)
-
-
-def __ghidrathon_stderr_writer_wrapper__(*args, **kwargs):
-    state = __get_cached_state__()
-    if state.stderr is None:
-        raise RuntimeError("GhidraScript stderr is None!")
-
-    return state.stderr.write(*args, **kwargs)
-
-
-def __set_io_writer_wrappers__():
-    import sys
-
-    def get_fake_io_wrapper():
-        """build a TextIOWrapper referencing an empty byte array
-
-        we set the encoding to the system default in hopes this doesn't cause issues when sending text from Python to Java
-        """
-        import io
-
-        return io.TextIOWrapper(io.BytesIO(b""), encoding=sys.getdefaultencoding())
-
-    # sys.stdout and sys.stderr may be None (see https://docs.python.org/3/library/sys.html#sys.__stdout__); therefore
-    # we must set these to an object that has enough functionality to emulate basic write functionality. we create a
-    # TextIOWrapper referencing an empty byte array and override the write method with the write method of our Java
-    # PrintWriters connected to the Ghidra console window. hopefully this is good enough but we may run into issues in the
-    # future if Python code tries to reference unexpected methods/members e.g. "encoding"
-    if sys.stdout is None:
-        sys.stdout = get_fake_io_wrapper()
-
-    if sys.stderr is None:
-        sys.stderr = get_fake_io_wrapper()
-
-    # set sys.stdout.write and sys.stderr.write wrappers
-    sys.stdout.write = __ghidrathon_stdout_writer_wrapper__
-    sys.stderr.write = __ghidrathon_stderr_writer_wrapper__
-
-
-__set_io_writer_wrappers__()
-
-
-def __set_flatapi_wrappers__():
+def wrap_flatprogramapi_functions():
     import ghidra.app.script
 
     for attr in dir(ghidra.app.script.GhidraScript):
@@ -163,30 +299,45 @@ def __set_flatapi_wrappers__():
             continue
 
         # dynamically generate wrapper stub using attribute name
-        exec(__ghidrathon_flatapi_wrapper_stub_template__ % attr, globals())
+        exec(flatprogramapi_wrapper_stub % attr, globals())
 
         # add dynamically generated wrapper stub to __builtins__
         __builtins__[attr] = globals()[attr]
 
 
-__set_flatapi_wrappers__()
+wrap_flatprogramapi_functions()
 
 
-def __set_state_wrappers__():
-    __builtins__["monitor"] = __ghidrathon_monitor_wrapper__
-    __builtins__["currentProgram"] = __ghidrathon_currentProgram_wrapper__
-    __builtins__["currentAddress"] = __ghidrathon_currentAddress_wrapper__
-    __builtins__["currentLocation"] = __ghidrathon_currentLocation_wrapper__
-    __builtins__["currentSelection"] = __ghidrathon_currentSelection_wrapper__
-    __builtins__["currentHighlight"] = __ghidrathon_currentHighlight_wrapper__
+def wrapped_monitor():
+    return get_script().getMonitor()
 
 
-__set_state_wrappers__()
+def wrapped_currentProgram():
+    return get_script_state().getCurrentProgram()
 
 
-def __set_builtins_cache__():
-    if __cache_key__ not in __builtins__:
-        __builtins__[__cache_key__] = {}
+def wrapped_currentAddress():
+    return get_script_state().getCurrentAddress()
 
 
-__set_builtins_cache__()
+def wrapped_currentLocation():
+    return get_script_state().getCurrentLocation()
+
+
+def wrapped_currentSelection():
+    return get_script_state().getCurrentSelection()
+
+
+def wrapped_currentHighlight():
+    return get_script_state().getCurrentHighlight()
+
+
+__builtins__["monitor"] = wrapped_monitor
+__builtins__["currentProgram"] = wrapped_currentProgram
+__builtins__["currentAddress"] = wrapped_currentAddress
+__builtins__["currentLocation"] = wrapped_currentLocation
+__builtins__["currentSelection"] = wrapped_currentSelection
+__builtins__["currentHighlight"] = wrapped_currentHighlight
+
+if cache_key not in __builtins__:
+    __builtins__[cache_key] = {}
