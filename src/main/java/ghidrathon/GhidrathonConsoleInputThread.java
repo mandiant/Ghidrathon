@@ -140,24 +140,23 @@ public class GhidrathonConsoleInputThread extends Thread {
     GhidrathonScript interactiveScript = plugin.getInteractiveScript();
     Program program = plugin.getCurrentProgram();
 
-    Transaction tx = program != null ? program.openTransaction("Ghidrathon command") : null;
+    try (Transaction tx = program != null ? program.openTransaction("Ghidrathon console command") : null) {
 
-    interactiveTaskMonitor.clearCanceled();
-    interactiveScript.setSourceFile(new ResourceFile(new File("Ghidrathon")));
-    PluginTool tool = plugin.getTool();
+      interactiveTaskMonitor.clearCanceled();
+      interactiveScript.setSourceFile(new ResourceFile(new File("Ghidrathon")));
+      PluginTool tool = plugin.getTool();
 
-    interactiveScript.set(
-        new GhidraState(
-            tool,
-            tool.getProject(),
-            program,
-            plugin.getProgramLocation(),
-            plugin.getProgramSelection(),
-            plugin.getProgramHighlight()),
-        interactiveTaskMonitor,
-        new PrintWriter(console.getStdOut()));
+      interactiveScript.set(
+          new GhidraState(
+              tool,
+              tool.getProject(),
+              program,
+              plugin.getProgramLocation(),
+              plugin.getProgramSelection(),
+              plugin.getProgramHighlight()),
+          interactiveTaskMonitor,
+          new PrintWriter(console.getStdOut()));
 
-    try {
       status = python.eval(line, interactiveScript);
     } finally {
       interactiveScript.end(false);
