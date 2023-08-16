@@ -10,6 +10,7 @@ import abc
 import io
 import os
 
+import java.lang
 
 cache_key = "ghidrathon_cache"
 flatprogramapi_wrapper_stub = """@flatprogramapi_wrapper\ndef %s(*args, **kwargs): ..."""
@@ -29,9 +30,7 @@ class GhidrathonCachedGhidraState:
 
 
 def get_java_thread_id():
-    from java.lang import Thread
-
-    return Thread.currentThread().getId()
+    return java.lang.Thread.currentThread().getId()
 
 
 def get_cache():
@@ -191,10 +190,6 @@ class GhidrathonTextIOWrapperBase(abc.ABC):
 
         self.flush()
         self.closed = True
-
-    def fileno(self):
-        """Return the underlying file descriptor (an integer) of the stream if it exists. An OSError is raised if the IO object does not use a file descriptor."""
-        raise OSError("operation not supported")
 
     def seekable(self):
         """Return True if the stream supports random access. If False, seek(), tell() and truncate() will raise OSError."""

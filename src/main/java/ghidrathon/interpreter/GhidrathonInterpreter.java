@@ -77,7 +77,7 @@ public class GhidrathonInterpreter {
 
     jep_.invoke("jepwrappers.init_state");
     jep_.invoke("jepwrappers.set_streams", this.out, this.err);
- 
+
     setJepEval();
     setJepRunScript();
   }
