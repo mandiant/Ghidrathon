@@ -42,13 +42,15 @@ class TestJepBridge(unittest.TestCase):
         self.assertIsInstance(Date(), Serializable)
         self.assertTrue(issubclass(Date, Object))
         self.assertTrue(issubclass(Date, Serializable))
-        self.assertIsInstance(currentProgram, ProgramDB)
+        self.assertIsInstance(currentProgram(), ProgramDB)
 
     def test_ghidra_script_variables(self):
-        self.assertIsJavaObject(currentProgram)
-        self.assertIsJavaObject(currentLocation)
-        self.assertIsJavaObject(currentHighlight)
-        self.assertIsJavaObject(currentSelection)
+        self.assertIsJavaObject(monitor())
+        self.assertIsJavaObject(currentAddress())
+        self.assertIsJavaObject(currentProgram())
+        self.assertIsJavaObject(currentLocation())
+        self.assertIsJavaObject(currentHighlight())
+        self.assertIsJavaObject(currentSelection())
 
     def test_ghidra_script_methods(self):
         self.assertIsInstance(getGhidraVersion(), str)
