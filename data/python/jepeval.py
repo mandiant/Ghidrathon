@@ -52,6 +52,14 @@ def jepeval(line):
                 # e.g. for loop; cache statement to combine and compile/eval later
                 jepeval_lines = [line]
                 return True
+            except SyntaxError as err:
+                if err.msg == "unexpected EOF while parsing":
+                    # python3.8 does not raise IndentationError, TabError so we must check for a SyntaxError
+                    # with a hard-coded message
+                    jepeval_lines = [line]
+                    return True
+                else:
+                    raise err
         else:
             # we have cached statements, user must be defining a multi-line block e.g. for loop; cache
             # statement to combine and compile/eval later
