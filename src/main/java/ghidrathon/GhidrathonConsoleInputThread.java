@@ -10,10 +10,14 @@
 
 package ghidrathon;
 
+import db.Transaction;
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.interpreter.InterpreterConsole;
 import ghidra.app.script.GhidraState;
+import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
+import ghidra.util.task.TaskMonitor;
 import ghidrathon.interpreter.GhidrathonInterpreter;
 import java.io.BufferedReader;
 import java.io.File;
@@ -132,37 +136,30 @@ public class GhidrathonConsoleInputThread extends Thread {
 
     boolean status;
 
-    // set transaction for the execution
-    int transactionNumber = -1;
-    if (plugin.getCurrentProgram() != null) {
-      transactionNumber = plugin.getCurrentProgram().startTransaction("Ghidrathon command");
-    }
+    TaskMonitor interactiveTaskMonitor = plugin.getInteractiveTaskMonitor();
+    GhidrathonScript interactiveScript = plugin.getInteractiveScript();
+    Program program = plugin.getCurrentProgram();
 
-    // setup Ghidra state to be passed into interpreter
-    plugin.getInteractiveTaskMonitor().clearCanceled();
-    plugin.getInteractiveScript().setSourceFile(new ResourceFile(new File("Ghidrathon")));
-    plugin
-        .getInteractiveScript()
-        .set(
-            new GhidraState(
-                plugin.getTool(),
-                plugin.getTool().getProject(),
-                plugin.getCurrentProgram(),
-                plugin.getProgramLocation(),
-                plugin.getProgramSelection(),
-                plugin.getProgramHighlight()),
-            plugin.getInteractiveTaskMonitor(),
-            new PrintWriter(console.getStdOut()));
+    try (Transaction tx = program != null ? program.openTransaction("Ghidrathon console command") : null) {
 
-    try {
+      interactiveTaskMonitor.clearCanceled();
+      interactiveScript.setSourceFile(new ResourceFile(new File("Ghidrathon")));
+      PluginTool tool = plugin.getTool();
 
-      status = python.eval(line, plugin.getInteractiveScript());
+      interactiveScript.set(
+          new GhidraState(
+              tool,
+              tool.getProject(),
+              program,
+              plugin.getProgramLocation(),
+              plugin.getProgramSelection(),
+              plugin.getProgramHighlight()),
+          interactiveTaskMonitor,
+          new PrintWriter(console.getStdOut()));
 
+      status = python.eval(line, interactiveScript);
     } finally {
-
-      if (plugin.getCurrentProgram() != null) {
-        plugin.getCurrentProgram().endTransaction(transactionNumber, true);
-      }
+      interactiveScript.end(false);
     }
 
     return status;

@@ -8,7 +8,7 @@ Check out:
 
 - The overview in our first [Ghidrathon blog post](https://www.mandiant.com/resources/blog/ghidrathon-snaking-ghidra-python-3-scripting)
 
-Ghidrathon replaces the existing Python 2 extension implemented via Jython. This includes the interactive interpreter window, integration with the Ghidra Script Manager, and script execution in Ghidra headless mode. 
+Ghidrathon replaces the existing Python 2.7 extension implemented via Jython. This includes the interactive interpreter window, integration with the Ghidra Script Manager, and script execution in Ghidra headless mode.
 
 ## Python 3 Interpreter Window
 
@@ -28,7 +28,7 @@ Ghidrathon helps you execute Python 3 scripts in Ghidra headless mode. Execute t
 
 ```
 $ analyzeHeadless C:\Users\wampus example -process example.o -postScript ghidrathon_example.py
-...
+[...]
 INFO  SCRIPT: C:\Users\wampus\.ghidra\.ghidra_10.0.3_PUBLIC\Extensions\Ghidrathon-master\ghidra_scripts\ghidrathon_example.py (HeadlessAnalyzer)
 Function _init @ 0x101000: 3 blocks, 8 instructions
 Function FUN_00101020 @ 0x101020: 1 blocks, 2 instructions
@@ -49,7 +49,7 @@ Function __libc_start_main @ 0x105010: 0 blocks, 0 instructions
 Function __gmon_start__ @ 0x105018: 0 blocks, 0 instructions
 Function _ITM_registerTMCloneTable @ 0x105020: 0 blocks, 0 instructions
 Function __cxa_finalize @ 0x105028: 0 blocks, 0 instructions
-...
+[...]
 INFO  REPORT: Post-analysis succeeded for file: /example.o (HeadlessAnalyzer)
 INFO  REPORT: Save succeeded for processed file: /example.o (HeadlessAnalyzer)
 ```
@@ -61,6 +61,12 @@ For more information on running Ghidra in headless mode check out `<ghidra_insta
 One of our biggest motivations in developing Ghidrathon was to enable use of third-party Python 3 modules in Ghidra. You can install a module and start using it inside Ghidra just as you would a typical Python setup. This also applies to modules you have previously installed. For example, we can install and use Unicorn to emulate ARM code inside Ghidra.
 
 ![example](./data/ghidrathon_unicorn.png)
+
+## Writing Ghidra Python 3 Scripts
+
+Ghidrathon provides a scripting experience that closely mirrors Ghidra's Java and Jython extensions which includes making `GhidraScript` state instance variables, e.g. `currentProgram`, and `FlatProgramAPI` methods, e.g. `findBytes` 
+available at the Python `builtins` scope. This means _all_ Python modules that are imported by your code have access to these variables and methods. Ghidrathon diverges slightly from Ghidra's Java and Jython extensions by exposing `GhidraScript` 
+state variables as Python function calls versus direct accesses e.g. your Python 3 code must access `currentProgram` using the function call `currentProgram()`. This small change ensures that your Python 3 code is provided the correct `GhidraScript` state variables during execution. Please see our Ghidra Python 3 script example [here](./ghidra_scripts/ghidrathon_example.py) for a closer look at writing Python 3 scripts for Ghidra.
 
 ## How does it work?
 
@@ -85,7 +91,7 @@ Tool | Version |Source |
 | Ghidra | `>= 10.2` | https://ghidra-sre.org |
 | Jep | `>= 4.1.1` | https://github.com/ninia/jep |
 | Gradle | `>= 7.3` | https://gradle.org/releases |
-| Python | `>= 3.7` | https://www.python.org/downloads |
+| Python | `>= 3.8` | https://www.python.org/downloads |
 
 Note: Ghidra >= 10.2 requires [JDK 17 64-bit](https://adoptium.net/temurin/releases/).
 

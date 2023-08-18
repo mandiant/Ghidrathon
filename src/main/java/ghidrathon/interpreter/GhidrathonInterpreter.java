@@ -42,7 +42,6 @@ public class GhidrathonInterpreter {
   private static final GhidrathonClassEnquirer ghidrathonClassEnquirer =
       new GhidrathonClassEnquirer();
   private static final AtomicBoolean jepConfigInitialized = new AtomicBoolean(false);
-  private static final AtomicBoolean ghidraScriptMethodsInitialized = new AtomicBoolean(false);
   private static final AtomicBoolean jepNativeBinaryInitialized = new AtomicBoolean(false);
 
   /**
@@ -74,6 +73,11 @@ public class GhidrathonInterpreter {
 
     // now that everything is configured, we should be able to run some utility scripts
     // to help us further configure the Python environment
+    setJepWrappers();
+
+    jep_.invoke("jepwrappers.init_state");
+    jep_.invoke("jepwrappers.set_streams", this.out, this.err);
+
     setJepEval();
     setJepRunScript();
   }
@@ -119,7 +123,7 @@ public class GhidrathonInterpreter {
   }
 
   /** Extends Python sys.path to include Ghidra script source directories */
-  private void setSysPath() {
+  private void extendPythonSysPath() {
     String paths = "";
 
     for (ResourceFile resourceFile : GhidraScriptUtil.getScriptSourceDirectories()) {
@@ -164,10 +168,19 @@ public class GhidrathonInterpreter {
       MainInterpreter.setJepLibraryPath(nativeJep.getAbsolutePath());
 
     } catch (IllegalStateException e) {
-      // library path has already been set elsewhere, we expect this to happen as Jep
-      // Maininterpreter
-      // thread exists forever once it's created
+      e.printStackTrace(this.err);
+      throw new RuntimeException(e);
     }
+  }
+
+  /**
+   * Configure wrapper functions in Python land.
+   *
+   * @throws JepException
+   */
+  private void setJepWrappers() throws JepException {
+
+    jep_.eval("import jepwrappers");
   }
 
   /**
@@ -207,56 +220,6 @@ public class GhidrathonInterpreter {
   }
 
   /**
-   * Configure GhidraState.
-   *
-   * <p>This exposes things like currentProgram, currentAddress, etc. similar to Jython. We need to
-   * repeat this prior to executing new Python code in order to provide the latest state e.g. that
-   * current currentAddress. Requires data/python/jepinject.py.
-   *
-   * @param script GhidrathonScript instance
-   * @throws JepException
-   * @throws FileNotFoundException
-   */
-  private void injectScriptHierarchy(GhidraScript script)
-      throws JepException, FileNotFoundException {
-    if (script == null) {
-      return;
-    }
-
-    ResourceFile file =
-        Application.getModuleDataFile(GhidrathonUtils.THIS_EXTENSION_NAME, "python/jepbuiltins.py");
-    jep_.runScript(file.getAbsolutePath());
-
-    // inject GhidraScript public/private fields e.g. currentAddress into Python
-    // see
-    // https://github.com/NationalSecurityAgency/ghidra/blob/master/Ghidra/Features/Python/src/main/java/ghidra/python/GhidraPythonInterpreter.java#L341-L377
-    for (Class<?> scriptClass = script.getClass();
-        scriptClass != Object.class;
-        scriptClass = scriptClass.getSuperclass()) {
-      for (Field field : scriptClass.getDeclaredFields()) {
-        if (Modifier.isPublic(field.getModifiers()) || Modifier.isProtected(field.getModifiers())) {
-          try {
-            field.setAccessible(true);
-            jep_.invoke("jep_set_builtin", field.getName(), field.get(script));
-          } catch (IllegalAccessException iae) {
-            throw new JepException("Unexpected security manager being used!");
-          }
-        }
-      }
-    }
-
-    // inject GhidraScript methods once into Python; we ASSUME all SharedInterpreters can share the same methods
-    if (ghidraScriptMethodsInitialized.get() == false) {
-      file =
-          Application.getModuleDataFile(GhidrathonUtils.THIS_EXTENSION_NAME, "python/jepinject.py");
-      jep_.set("__ghidra_script__", script);
-      jep_.runScript(file.getAbsolutePath());
-
-      ghidraScriptMethodsInitialized.set(true);
-    }
-  }
-
-  /**
    * Create a new GhidrathonInterpreter instance.
    *
    * @return GhidrathonInterpreter
@@ -287,7 +250,9 @@ public class GhidrathonInterpreter {
     try {
 
       if (jep_ != null) {
+        jep_.invoke("jepwrappers.remove_state");
         jep_.close();
+
         jep_ = null;
       }
 
@@ -330,8 +295,7 @@ public class GhidrathonInterpreter {
 
     try {
 
-      setSysPath();
-      setStreams();
+      extendPythonSysPath();
 
       return (boolean) jep_.invoke("jepeval", line);
 
@@ -351,25 +315,13 @@ public class GhidrathonInterpreter {
    * @param line Python statement
    * @param script GhidrathonScript with desired state.
    * @return True (need more input), False (no more input needed)
-   * @throws FileNotFoundException
    */
   public boolean eval(String line, GhidrathonScript script) {
 
     try {
 
-      injectScriptHierarchy(script);
-
-    } catch (JepException | FileNotFoundException e) {
-
-      // we made it here; something bad went wrong, raise to caller
-      e.printStackTrace(this.err);
-      throw new RuntimeException(e);
-    }
-
-    try {
-
-      setSysPath();
-      setStreams();
+      jep_.invoke("jepwrappers.set_script", script);
+      extendPythonSysPath();
 
       return (boolean) jep_.invoke("jepeval", line);
 
@@ -392,8 +344,7 @@ public class GhidrathonInterpreter {
 
     try {
 
-      setSysPath();
-      setStreams();
+      extendPythonSysPath();
 
       jep_.invoke("jep_runscript", file.getAbsolutePath());
 
@@ -412,51 +363,19 @@ public class GhidrathonInterpreter {
    *
    * @param file Python script to execute
    * @param script GhidrathonScript with desired state.
-   * @throws FileNotFoundException
    */
   public void runScript(ResourceFile file, GhidraScript script) {
 
     try {
 
-      injectScriptHierarchy(script);
-
-      setSysPath();
-      setStreams();
+      jep_.invoke("jepwrappers.set_script", script);
+      extendPythonSysPath();
 
       jep_.invoke("jep_runscript", file.getAbsolutePath());
 
-    } catch (JepException | FileNotFoundException e) {
+    } catch (JepException e) {
 
       // Python exceptions should be handled in Python land; something bad must have happened
-      e.printStackTrace(this.err);
-      throw new RuntimeException(e);
-    }
-  }
-
-  /**
-   * Set output and error streams for Jep instance.
-   *
-   * <p>Output and error streams from Python interpreter are redirected to the specified streams. If
-   * these are not set, this data is lost.
-   *
-   * @param out output stream
-   * @param err error stream
-   */
-  public void setStreams() {
-
-    try {
-
-      ResourceFile file =
-          Application.getModuleDataFile(GhidrathonUtils.THIS_EXTENSION_NAME, "python/jepstream.py");
-
-      jep_.set("GhidraPluginToolConsoleOutWriter", this.out);
-      jep_.set("GhidraPluginToolConsoleErrWriter", this.err);
-
-      jep_.runScript(file.getAbsolutePath());
-
-    } catch (JepException | FileNotFoundException e) {
-
-      // ensure stack trace prints to err stream for user
       e.printStackTrace(this.err);
       throw new RuntimeException(e);
     }
@@ -470,7 +389,7 @@ public class GhidrathonInterpreter {
           Application.getModuleDataFile(
               GhidrathonUtils.THIS_EXTENSION_NAME, "python/jepwelcome.py");
 
-      jep_.set("GhidraVersion", Application.getApplicationVersion());
+      jep_.set("ghidra_version", Application.getApplicationVersion());
 
       runScript(file);
 
