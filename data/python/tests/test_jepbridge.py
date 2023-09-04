@@ -46,6 +46,7 @@ class TestJepBridge(unittest.TestCase):
 
     def test_ghidra_script_variables(self):
         self.assertIsJavaObject(monitor())
+        self.assertIsJavaObject(state())
         self.assertIsJavaObject(currentAddress())
         self.assertIsJavaObject(currentProgram())
         self.assertIsJavaObject(currentLocation())
@@ -53,6 +54,7 @@ class TestJepBridge(unittest.TestCase):
         self.assertIsJavaObject(currentSelection())
 
         self.assertIsNotJavaObject(monitor)
+        self.assertIsNotJavaObject(state)
         self.assertIsNotJavaObject(currentAddress)
         self.assertIsNotJavaObject(currentProgram)
         self.assertIsNotJavaObject(currentLocation)
@@ -61,8 +63,12 @@ class TestJepBridge(unittest.TestCase):
 
     def test_ghidra_script_methods(self):
         self.assertIsInstance(getGhidraVersion(), str)
+        self.assertIsJavaObject(getState())
 
     def test_java_excluded_packages(self):
         import pdb
 
         self.assertIsNotJavaObject(pdb)
+
+    def test_ghidra_script_state(self):
+        self.assertTrue(state() == getState())
