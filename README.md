@@ -122,7 +122,7 @@ This command installs Jep, configures Ghidrathon with the necessary Jep binaries
 
 ## Installing Ghidrathon
 
-Use the following steps to install your Ghidrathon extension in Ghidra:
+Use the following steps to install your Ghidrathon extension using the Ghidra UI:
 
 * Start Ghidra
 * Navigate to `File > Install Extensions...`
@@ -133,7 +133,7 @@ Use the following steps to install your Ghidrathon extension in Ghidra:
 
 **OR**
 
-You can extract your Ghidrathon extension (`.zip`) directly to `<absolute path to Ghidra install>\Ghidra\Extensions` and Ghidra will prompt you to configure Ghidrathon the next time it is started.
+Extract your Ghidrathon extension (`.zip`) directly to `<absolute path to Ghidra install>\Ghidra\Extensions` to automatically enable Ghidrathon the next time that Ghidra is started. This method great if you do not have access to the Ghidra UI when installing Ghidrathon.
 
 ### Disabling Jython
 
