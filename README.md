@@ -133,7 +133,7 @@ Use the following steps to install your Ghidrathon extension using the Ghidra UI
 
 **OR**
 
-Extract your Ghidrathon extension (`.zip`) directly to `<absolute path to Ghidra install>\Ghidra\Extensions` to automatically enable Ghidrathon the next time that Ghidra is started. This method great if you do not have access to the Ghidra UI when installing Ghidrathon.
+Extract your Ghidrathon extension (`.zip`) directly to `<absolute path to Ghidra install>\Ghidra\Extensions` to automatically enable Ghidrathon the next time that Ghidra is started. This method works great if you do not have access to the Ghidra UI when installing Ghidrathon.
 
 ### Disabling Jython
 
