@@ -24,10 +24,13 @@ import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.util.task.TaskLauncher;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.Msg;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.io.File;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import javax.swing.*;
 
 // @formatter:off
@@ -113,8 +116,26 @@ public class GhidrathonPlugin extends ProgramPlugin
 
   @Override
   public List<CodeCompletion> getCompletions(String cmd) {
-    // TODO Auto-generated method stub
-    return Collections.<CodeCompletion>emptyList();
+    return getCompletions(cmd, cmd.length());
+  }
+
+  /**
+   * Returns a list of possible command completion values at the given position.
+   *
+   * @param cmd current command line (without prompt)
+   * @param caretPos The position of the caret in the input string 'cmd'
+   * @return A list of possible command completion values. Could be empty if there aren't any.
+   */
+  @Override
+  public List<CodeCompletion> getCompletions(String cmd, int caretPos) {
+    try {
+      return inputThread.getREPL().submitTask((python) -> python.getCommandCompletions(cmd, caretPos)).get();
+    } catch (InterruptedException | ExecutionException e) {
+      e.printStackTrace(console.getErrWriter());
+      Msg.error(GhidrathonConsoleInputThread.class, "An internal error occured while retrieving completion options. Please reset.", e);
+
+      return Collections.<CodeCompletion>emptyList();
+    }
   }
 
   private void resetInterpreter() {

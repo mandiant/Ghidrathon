@@ -11,9 +11,11 @@
 package ghidrathon.interpreter;
 
 import generic.jar.ResourceFile;
+import ghidra.app.plugin.core.console.CodeCompletion;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.framework.Application;
+import ghidra.util.Msg;
 import ghidrathon.GhidrathonClassEnquirer;
 import ghidrathon.GhidrathonConfig;
 import ghidrathon.GhidrathonScript;
@@ -24,10 +26,17 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.*;
 import jep.Jep;
 import jep.JepConfig;
 import jep.JepException;
 import jep.MainInterpreter;
+import jep.python.PyObject;
+import jep.python.PyCallable;
+
+import util.CollectionUtils;
 
 /** Utility class used to configure a Jep instance to access Ghidra */
 public class GhidrathonInterpreter {
@@ -36,6 +45,8 @@ public class GhidrathonInterpreter {
   private PrintWriter out = null;
   private PrintWriter err = null;
   private GhidrathonConfig config = null;
+
+  private PyObject introspectModule = null;
 
   // these variables set across GhidrathonInterpreter instances
   private static final JepConfig jepConfig = new JepConfig();
@@ -70,6 +81,9 @@ public class GhidrathonInterpreter {
 
     // create new Jep SharedInterpreter instance
     jep_ = new jep.SharedInterpreter();
+
+    jep_.eval("import complete");
+    introspectModule = jep_.getValue("complete", PyObject.class);
 
     // now that everything is configured, we should be able to run some utility scripts
     // to help us further configure the Python environment
@@ -408,5 +422,31 @@ public class GhidrathonInterpreter {
   public String getSecondaryPrompt() {
 
     return "... ";
+  }
+
+  // Taken from https://github.com/NationalSecurityAgency/ghidra/blob/d7d6b44e296ac4a215766916d5c24e8b53b2909a/Ghidra/Features/Python/src/main/java/ghidra/python/GhidraPythonInterpreter.java#L440
+  // Heavily modified
+  /**
+   * Returns the possible command completions for a command.
+   *
+   * @param cmd The command line.
+   * @param caretPos The position of the caret in the input string 'cmd'
+   * @return A list of possible command completions.  Could be empty if there aren't any.
+   * @see PythonPlugin#getCompletions
+   */
+  public List<CodeCompletion> getCommandCompletions(String cmd, int caretPos) {
+    // At this point the caret is assumed to be positioned right after the value we need to
+    // complete (example: "[complete.Me<caret>, rest, code]"). To make the completion work
+    // in our case, it's sufficient (albeit naive) to just remove the text on the right side
+    // of our caret. The later code (on the python's side) will parse the rest properly
+    // and will generate the completions.
+    cmd = cmd.substring(0, caretPos);
+
+    return (List<CodeCompletion>) introspectModule.getAttr("complete", PyCallable.class).call(cmd, getLocals());
+  }
+
+  private PyObject getLocals() {
+    jep_.eval("__ghidrathon_locals__ = locals()");
+    return jep_.getValue("__ghidrathon_locals__", PyObject.class);
   }
 }

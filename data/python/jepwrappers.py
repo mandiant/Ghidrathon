@@ -11,9 +11,10 @@ import io
 import os
 
 import java.lang
+import ghidra
+from ghidrathon import PythonCodeCompletionFactory
 
 cache_key = "ghidrathon_cache"
-flatprogramapi_wrapper_stub = """@flatprogramapi_wrapper\ndef %s(*args, **kwargs): ..."""
 
 
 class GhidrathonCachedStream:
@@ -98,10 +99,9 @@ def remove_state():
     del get_cache()[get_java_thread_id()]
 
 
-def flatprogramapi_wrapper(api):
-    def wrapped(*args, **kwargs):
-        return getattr(get_script(), api.__name__)(*args, **kwargs)
-
+def flatprogramapi_wrapper(attr, retval):
+    def wrapped(*args, **kwargs) -> retval:
+        return getattr(get_script(), attr)(*args, **kwargs)
     return wrapped
 
 
@@ -293,41 +293,44 @@ def wrap_flatprogramapi_functions():
         if not callable(attr_o):
             continue
 
-        # dynamically generate wrapper stub using attribute name
-        exec(flatprogramapi_wrapper_stub % attr, globals())
-
-        # add dynamically generated wrapper stub to __builtins__
-        __builtins__[attr] = globals()[attr]
+        retval = PythonCodeCompletionFactory.getReturnTypeForClass(ghidra.app.script.GhidraScript, attr)
+        # Special case: Jep converts between basic types automatically
+        # There are more special cases like this, but this is the most frequent one
+        if retval == java.lang.String:
+            retval = str
+        # dynamically generate wrapper stub using attribute name and return value
+        # and add dynamically generated wrapper stub to __builtins__
+        __builtins__[attr] = flatprogramapi_wrapper(attr, retval)
 
 
 wrap_flatprogramapi_functions()
 
 
-def wrapped_monitor():
+def wrapped_monitor() -> ghidra.util.task.TaskMonitor:
     return get_script().getMonitor()
 
 
-def wrapped_state():
+def wrapped_state() -> ghidra.app.script.GhidraState:
     return get_script_state()
 
 
-def wrapped_currentProgram():
+def wrapped_currentProgram() -> ghidra.program.model.listing.Program:
     return get_script_state().getCurrentProgram()
 
 
-def wrapped_currentAddress():
+def wrapped_currentAddress() -> ghidra.program.model.address.Address:
     return get_script_state().getCurrentAddress()
 
 
-def wrapped_currentLocation():
+def wrapped_currentLocation() -> ghidra.program.util.ProgramLocation:
     return get_script_state().getCurrentLocation()
 
 
-def wrapped_currentSelection():
+def wrapped_currentSelection() -> ghidra.program.util.ProgramSelection:
     return get_script_state().getCurrentSelection()
 
 
-def wrapped_currentHighlight():
+def wrapped_currentHighlight() -> ghidra.program.util.ProgramSelection:
     return get_script_state().getCurrentHighlight()
 
 
