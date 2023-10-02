@@ -26,13 +26,95 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import java.util.concurrent.*;
+
 public class GhidrathonConsoleInputThread extends Thread {
+  public static interface GhidrathonREPLCallable<T> {
+    public abstract T call(GhidrathonInterpreter python);
+  }
+  
+  public static class GhidrathonREPLThread extends Thread {
+    private static int generationCount = 0;
+
+    private GhidrathonConfig config;
+    GhidrathonInterpreter python = null;
+
+    private AtomicBoolean shouldContinue = new AtomicBoolean(true);
+    private LinkedBlockingQueue<RunnableFuture<?>> tasks = new LinkedBlockingQueue<>();
+
+    public GhidrathonREPLThread(GhidrathonConfig config) {
+      super("Ghidrathon console repl thread (generation " + ++generationCount + ")");
+      this.config = config;
+    }
+
+    private void abort() {
+      shouldContinue.set(false);
+
+      while (!tasks.isEmpty()) {
+        try {
+          tasks.take().cancel(true);
+        } catch (InterruptedException e) {}
+      }
+    }
+
+    @Override
+    public void run() {
+      try {
+        python = GhidrathonInterpreter.get(config);
+      } catch (RuntimeException e) {
+        if (python != null) {
+          python.close();
+        }
+
+        abort();
+        e.printStackTrace(config.getStdErr());
+        return;
+      }
+
+      while (shouldContinue.get() || !tasks.isEmpty()) {
+        try {
+          tasks.take().run();
+        } catch (InterruptedException e) {
+          e.printStackTrace(config.getStdErr());
+        }
+      }
+      python.close();
+    }
+
+    public <T> Future<T> submitTask(final GhidrathonREPLCallable<T> f) throws InterruptedException {
+      if (!shouldContinue.get()) {
+        throw new IllegalStateException("Cannot submit task. REPL thread was already disposed");
+      }
+
+      final GhidrathonREPLThread self = this;
+
+      RunnableFuture<T> result = new FutureTask<T>(() -> f.call(self.python));
+      tasks.put(result);
+
+      return result;
+    }
+
+    public void dispose() {
+      // This order prevents race conditions
+      // We set shouldContinue to false first and then wake up the thread
+      // This ensures that when the thread processes
+      shouldContinue.set(false);
+      
+      // no-op future to wake up the thread
+      try {
+        tasks.put(new FutureTask<Object>(() -> null));
+      } catch (InterruptedException e) {
+        // This shouldn't happen, but there is nothing we can do except log the error
+        e.printStackTrace(config.getStdErr());
+      }
+    }
+  }
 
   private static int generationCount = 0;
 
   private GhidrathonPlugin plugin = null;
   private InterpreterConsole console = null;
-  private GhidrathonInterpreter python = null;
+  private GhidrathonREPLThread repl = null;
 
   private AtomicBoolean shouldContinue = new AtomicBoolean(true);
   private GhidrathonConfig config = GhidrathonUtils.getDefaultGhidrathonConfig();
@@ -49,6 +131,10 @@ public class GhidrathonConsoleInputThread extends Thread {
     config.addStdOut(console.getOutWriter());
   }
 
+  public GhidrathonREPLThread getREPL() {
+    return repl;
+  }
+
   /**
    * Console input thread.
    *
@@ -61,26 +147,28 @@ public class GhidrathonConsoleInputThread extends Thread {
 
     console.clear();
 
+    repl = new GhidrathonREPLThread(config);
+    repl.start();
+
     try {
 
-      python = GhidrathonInterpreter.get(config);
+      repl.submitTask((python) -> {
+          python.printWelcome();
+          return null;
+        }).get();
 
-      python.printWelcome();
-
-    } catch (RuntimeException e) {
-
-      if (python != null) {
-        python.close();
-      }
-
+    } catch (InterruptedException | ExecutionException e) {
       e.printStackTrace(config.getStdErr());
+      Msg.error(GhidrathonConsoleInputThread.class, "Failed to start ghidrathon console.", e);
+
+      repl.dispose();
       return;
     }
 
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(console.getStdin()))) {
 
       plugin.flushConsole();
-      console.setPrompt(python.getPrimaryPrompt());
+      console.setPrompt(repl.python.getPrimaryPrompt());
 
       // begin reading and passing input from console stdin to Python to be evaluated
       while (shouldContinue.get()) {
@@ -105,10 +193,14 @@ public class GhidrathonConsoleInputThread extends Thread {
 
         this.plugin.flushConsole();
         this.console.setPrompt(
-            moreInputWanted ? python.getSecondaryPrompt() : python.getPrimaryPrompt());
+            moreInputWanted ? repl.python.getSecondaryPrompt() : repl.python.getPrimaryPrompt());
       }
 
-    } catch (RuntimeException | IOException e) {
+    } catch (InterruptedException | ExecutionException e) {
+      e.printStackTrace(config.getStdErr());
+
+      Msg.error(GhidrathonConsoleInputThread.class, "Failed to evaluate python. Please reset", e);
+    } catch (IOException e) {
 
       e.printStackTrace();
       Msg.error(
@@ -118,7 +210,7 @@ public class GhidrathonConsoleInputThread extends Thread {
 
     } finally {
 
-      python.close();
+      repl.dispose();
     }
   }
 
@@ -132,7 +224,7 @@ public class GhidrathonConsoleInputThread extends Thread {
    * @return True if more input needed, otherwise False
    * @throws RuntimeException
    */
-  private boolean evalPython(String line) throws RuntimeException {
+  private boolean evalPython(String line) throws InterruptedException, ExecutionException {
 
     boolean status;
 
@@ -157,7 +249,8 @@ public class GhidrathonConsoleInputThread extends Thread {
           interactiveTaskMonitor,
           new PrintWriter(console.getStdOut()));
 
-      status = python.eval(line, interactiveScript);
+      status = repl.submitTask((python) -> python.eval(line, interactiveScript)).get();
+      
     } finally {
       interactiveScript.end(false);
     }
