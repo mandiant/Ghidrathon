@@ -15,7 +15,7 @@ should only be called after the Jep subinterpreter has been configured.
 import sys
 
 
-message = """
+message = r"""
    _____ _     _     _           _   _                 
   / ____| |   (_)   | |         | | | |                
  | |  __| |__  _  __| |_ __ __ _| |_| |__   ___  _ __  
