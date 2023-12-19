@@ -36,7 +36,7 @@ else {
 // the env variable "JAVA_HOME" containing absolute path to Java JDK configured for Ghidra
 task installJep(type: Exec) {
     environment "JAVA_HOME", System.getProperty("java.home")
-    commandLine pythonBin, '-m', 'pip', 'install', 'jep'
+    commandLine pythonBin, '-m', 'pip', 'install', 'jep==4.2'
 }
 
 // we need to copy the Jep native binaries built in installJep to our extension directory; we use a small
