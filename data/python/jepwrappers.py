@@ -311,6 +311,10 @@ def wrapped_state():
     return get_script_state()
 
 
+def wrapped_script():
+    return get_script()
+
+
 def wrapped_currentProgram():
     return get_script_state().getCurrentProgram()
 
@@ -333,6 +337,7 @@ def wrapped_currentHighlight():
 
 __builtins__["monitor"] = wrapped_monitor
 __builtins__["state"] = wrapped_state
+__builtins__["script"] = wrapped_script
 __builtins__["currentProgram"] = wrapped_currentProgram
 __builtins__["currentAddress"] = wrapped_currentAddress
 __builtins__["currentLocation"] = wrapped_currentLocation
