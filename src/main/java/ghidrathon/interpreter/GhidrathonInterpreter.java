@@ -43,7 +43,7 @@ public class GhidrathonInterpreter {
       new GhidrathonClassEnquirer();
   private static final AtomicBoolean jepConfigInitialized = new AtomicBoolean(false);
   private static final AtomicBoolean jepMainInterpreterInitialized = new AtomicBoolean(false);
-  private static final AtomicBoolean jepPythonSysInitialized = new AtomicBoolean(false);
+  private static final AtomicBoolean jepPythonSysModuleInitialized = new AtomicBoolean(false);
 
   private static File jepPythonPackageDir = null;
   private static File jepNativeFile = null;
@@ -67,7 +67,7 @@ public class GhidrathonInterpreter {
       jepMainInterpreterInitialized.set(true);
     }
 
-    // we must set JepConfig once before creating the first SharedInterpreter
+    // we must set JepConfig once before creating the first jep.SharedInterpreter
     if (jepConfigInitialized.get() == false) {
       setJepConfig();
       jepConfigInitialized.set(true);
@@ -76,19 +76,20 @@ public class GhidrathonInterpreter {
     // create new Jep SharedInterpreter instance
     jep_ = new jep.SharedInterpreter();
 
-    // we must configure Python sys AFTER the first jep.SharedInterpreter is created
-    if (jepPythonSysInitialized.get() == false) {
+    // we must configure Python sys module AFTER the first jep.SharedInterpreter is created
+    if (jepPythonSysModuleInitialized.get() == false) {
       jep_.eval(
           String.format(
               "import sys;sys.executable=sys._base_executable=r\"%s\"",
               this.pythonFile));
+      // site module configures other necessary sys vars, e.g. sys.prefix, using sys.executable
       jep_.eval("import site;site.main()");
       jep_.eval(
           String.format(
               "sys.path.extend([r\"%s\"])",
               Application.getModuleDataSubDirectory(GhidrathonUtils.THIS_EXTENSION_NAME, "python")
                   .getAbsolutePath()));
-      jepPythonSysInitialized.set(true);
+      jepPythonSysModuleInitialized.set(true);
     }
 
     // now that everything is configured, we should be able to run some utility scripts
@@ -102,7 +103,7 @@ public class GhidrathonInterpreter {
     setJepRunScript();
   }
 
-  /** Configure JepConfig for ALL Jep SharedInterpreters */
+  /** Configure jep.JepConfig for ALL Jep SharedInterpreters */
   private void setJepConfig() {
     // configure the Python includes path with the user's Ghidra script directory
     String paths = "";
@@ -146,17 +147,13 @@ public class GhidrathonInterpreter {
   }
 
   /**
-   * Configure native Jep library.
-   *
-   * <p>User must build and include native Jep library in the appropriate OS folder prior to
-   * building this extension. Requires os/win64/libjep.dll for Windows Requires os/linux64/libjep.so
-   * for Linux
+   * Configure jep.MainInterpreter
    *
    * @throws JepException
    * @throws FileNotFoundException
    */
   private void configureJepMainInterpreter() throws JepException, FileNotFoundException {
-    // read Python file path from environment variable
+    // read absolute path of Python interpreter from GHIDRATHON_PYTHON environment variable
     String pythonFilePath = System.getenv("GHIDRATHON_PYTHON");
     if (pythonFilePath == null) {
       throw new JepException(
@@ -228,6 +225,8 @@ public class GhidrathonInterpreter {
       MainInterpreter.setJepLibraryPath(this.jepNativeFile.getAbsolutePath());
 
       PyConfig config = new PyConfig();
+
+      // we can't auto import the site module becuase we are running an embedded Python interpreter
       config.setNoSiteFlag(1);
       config.setIgnoreEnvironmentFlag(1);
 
