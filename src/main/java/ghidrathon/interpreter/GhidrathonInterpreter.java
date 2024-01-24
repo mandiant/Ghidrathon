@@ -14,20 +14,20 @@ import generic.jar.ResourceFile;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.framework.Application;
+import ghidra.util.Msg;
 import ghidrathon.GhidrathonClassEnquirer;
 import ghidrathon.GhidrathonConfig;
 import ghidrathon.GhidrathonScript;
 import ghidrathon.GhidrathonUtils;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.lang.reflect.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 import jep.Jep;
 import jep.JepConfig;
 import jep.JepException;
 import jep.MainInterpreter;
+import jep.PyConfig;
 
 /** Utility class used to configure a Jep instance to access Ghidra */
 public class GhidrathonInterpreter {
@@ -42,7 +42,12 @@ public class GhidrathonInterpreter {
   private static final GhidrathonClassEnquirer ghidrathonClassEnquirer =
       new GhidrathonClassEnquirer();
   private static final AtomicBoolean jepConfigInitialized = new AtomicBoolean(false);
-  private static final AtomicBoolean jepNativeBinaryInitialized = new AtomicBoolean(false);
+  private static final AtomicBoolean jepMainInterpreterInitialized = new AtomicBoolean(false);
+  private static final AtomicBoolean jepPythonSysInitialized = new AtomicBoolean(false);
+
+  private static File jepPythonPackageDir = null;
+  private static File jepNativeFile = null;
+  private static File pythonFile = null;
 
   /**
    * Create and configure a new GhidrathonInterpreter instance.
@@ -56,10 +61,10 @@ public class GhidrathonInterpreter {
     this.err = config.getStdErr();
     this.config = config;
 
-    // we must set the native Jep library once before creating a Jep instance
-    if (jepNativeBinaryInitialized.get() == false) {
-      setJepNativeBinaryPath();
-      jepNativeBinaryInitialized.set(true);
+    // we must configure jep.MainInterpreter once before creating our first jep.SharedInterpreter
+    if (jepMainInterpreterInitialized.get() == false) {
+      configureJepMainInterpreter();
+      jepMainInterpreterInitialized.set(true);
     }
 
     // we must set JepConfig once before creating the first SharedInterpreter
@@ -70,6 +75,21 @@ public class GhidrathonInterpreter {
 
     // create new Jep SharedInterpreter instance
     jep_ = new jep.SharedInterpreter();
+
+    // we must configure Python sys AFTER the first jep.SharedInterpreter is created
+    if (jepPythonSysInitialized.get() == false) {
+      jep_.eval(
+          String.format(
+              "import sys;sys.executable=sys._base_executable=r\"%s\"",
+              this.pythonFile));
+      jep_.eval("import site;site.main()");
+      jep_.eval(
+          String.format(
+              "sys.path.extend([r\"%s\"])",
+              Application.getModuleDataSubDirectory(GhidrathonUtils.THIS_EXTENSION_NAME, "python")
+                  .getAbsolutePath()));
+      jepPythonSysInitialized.set(true);
+    }
 
     // now that everything is configured, we should be able to run some utility scripts
     // to help us further configure the Python environment
@@ -87,25 +107,11 @@ public class GhidrathonInterpreter {
     // configure the Python includes path with the user's Ghidra script directory
     String paths = "";
 
-    // add data/python/ to Python includes directory
-    try {
-      paths +=
-          Application.getModuleDataSubDirectory(GhidrathonUtils.THIS_EXTENSION_NAME, "python")
-              + File.pathSeparator;
-    } catch (IOException e) {
-      e.printStackTrace(this.err);
-      throw new RuntimeException(e);
-    }
-
-    // add paths specified in Ghidrathon config
-    for (String path : this.config.getPythonIncludePaths()) {
-
-      paths += path + File.pathSeparator;
-    }
+    // add Jep parent directory
+    paths += this.jepPythonPackageDir.getParentFile().getAbsolutePath() + File.pathSeparator;
 
     // configure Java names that will be ignored when importing from Python
     for (String name : this.config.getJavaExcludeLibs()) {
-
       ghidrathonClassEnquirer.addJavaExcludeLib(name);
     }
 
@@ -149,28 +155,123 @@ public class GhidrathonInterpreter {
    * @throws JepException
    * @throws FileNotFoundException
    */
-  private void setJepNativeBinaryPath() throws JepException, FileNotFoundException {
+  private void configureJepMainInterpreter() throws JepException, FileNotFoundException {
+    // read Python file path from environment variable
+    String pythonFilePath = System.getenv("GHIDRATHON_PYTHON");
+    if (pythonFilePath == null) {
+      throw new JepException(
+          "Could not find environment variable GHIDRATHON_PYTHON. Please set GHIDRATHON_PYTHON to"
+              + " the absolute path of your Python interpreter before running Ghidrathon.");
+    }
+    this.pythonFile = new File(pythonFilePath);
 
-    File nativeJep;
-
-    try {
-
-      nativeJep = Application.getOSFile(GhidrathonUtils.THIS_EXTENSION_NAME, "libjep.so");
-
-    } catch (FileNotFoundException e) {
-
-      // whoops try Windows
-      nativeJep = Application.getOSFile(GhidrathonUtils.THIS_EXTENSION_NAME, "jep.dll");
+    // validate Python file path exists and is a file
+    if (!(this.pythonFile.exists() && this.pythonFile.isFile())) {
+      throw new JepException(
+          String.format(
+              "GHIDRATHON_PYTHON path %s is not valid. Please set GHIDRATHON_PYTHON to the"
+                  + " absolute path of your Python interpreter before running Ghidrathon.",
+              this.pythonFile.getAbsolutePath()));
     }
 
+    Msg.info(
+        GhidrathonInterpreter.class,
+        String.format("Using Python interpreter at %s.", this.pythonFile.getAbsolutePath()));
+
+    String jepPythonPackagePath = findJepPackageDir();
+    if (jepPythonPackagePath.isEmpty()) {
+      throw new JepException(
+          "Could not find Jep Python package. Please install Jep before running Ghidrathon.");
+    }
+    this.jepPythonPackageDir = new File(jepPythonPackagePath);
+
+    // validate Jep Python package directory is valid and exists
+    if (!(this.jepPythonPackageDir.exists() && this.jepPythonPackageDir.isDirectory())) {
+      throw new JepException(
+          String.format(
+              "Jep Python package path %s is not valid. Please verify your Jep installation works"
+                  + " before running Ghidrathon.",
+              this.jepPythonPackageDir.getAbsolutePath()));
+    }
+
+    Msg.info(
+        GhidrathonInterpreter.class,
+        String.format(
+            "Using Jep Python package at %s.", this.jepPythonPackageDir.getAbsolutePath()));
+
+    // find our native Jep file
+    // https://github.com/ninia/jep/blob/dd2bf345392b1b66fd6c9aeb12c234a557690ba1/src/main/java/jep/LibraryLocator.java#L86C1-L93C10
+    String libraryName = System.mapLibraryName("jep");
+    if (libraryName.endsWith(".dylib")) {
+      /*
+       * OS X uses a different extension for System.loadLibrary and
+       * System.mapLibraryName
+       */
+      libraryName = libraryName.replace(".dylib", ".jnilib");
+    }
+    this.jepNativeFile = new File(this.jepPythonPackageDir, libraryName);
+
+    // validate our native Jep file exists and is a file
+    if (!(this.jepNativeFile.exists() && this.jepNativeFile.isFile())) {
+      throw new JepException(
+          String.format(
+              "Jep native file path %s is not valid. Please verify your Jep installation works"
+                  + " before running Ghidrathon.",
+              this.jepNativeFile.getAbsolutePath()));
+    }
+
+    Msg.info(
+        GhidrathonInterpreter.class,
+        String.format("Using Jep native file at %s.", this.jepNativeFile.getAbsolutePath()));
+
     try {
+      MainInterpreter.setJepLibraryPath(this.jepNativeFile.getAbsolutePath());
 
-      MainInterpreter.setJepLibraryPath(nativeJep.getAbsolutePath());
+      PyConfig config = new PyConfig();
+      config.setNoSiteFlag(1);
+      config.setIgnoreEnvironmentFlag(1);
 
+      MainInterpreter.setInitParams(config);
     } catch (IllegalStateException e) {
       e.printStackTrace(this.err);
       throw new RuntimeException(e);
     }
+  }
+
+  private String findJepPackageDir() {
+    String output =
+        execCmd(
+            this.pythonFile.getAbsolutePath(),
+            "-c",
+            "import importlib.util;import"
+                + " pathlib;print(pathlib.Path(importlib.util.find_spec('jep').origin).parent)");
+    return output.trim();
+  }
+
+  // DANGER: DO NOT PASS DYNAMIC COMMANDS HERE!
+  private String execCmd(String... commands) {
+    Runtime runtime = Runtime.getRuntime();
+    Process process = null;
+    try {
+      process = runtime.exec(commands);
+    } catch (IOException e) {
+      Msg.error(GhidrathonInterpreter.class, "error: " + e.toString());
+      return "";
+    }
+
+    BufferedReader lineReader =
+        new BufferedReader(new java.io.InputStreamReader(process.getInputStream()));
+    String output = String.join("\n", lineReader.lines().collect(Collectors.toList()));
+
+    BufferedReader errorReader =
+        new BufferedReader(new java.io.InputStreamReader(process.getErrorStream()));
+    String error = String.join("\n", errorReader.lines().collect(Collectors.toList()));
+
+    if (error.length() > 0) {
+      Msg.error(GhidrathonInterpreter.class, error);
+    }
+
+    return output;
   }
 
   /**
