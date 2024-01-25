@@ -28,18 +28,18 @@ def main(args):
     if args.debug:
         logger.setLevel(logging.DEBUG)
 
-    install_path = pathlib.Path(args.ghidrathon_install_directory)
+    install_path: pathlib.Path = args.ghidrathon_install_directory
     if not all((install_path.exists(), install_path.is_dir())):
-        logger.error('"%s" does not exist', str(install_path))
+        logger.error('"%s" does not exist or is not a directory.', str(install_path))
         return
 
-    save_path = install_path / "ghidrathon.save"
+    save_path: pathlib.Path = install_path / "ghidrathon.save"
     try:
         save_path.write_text(sys.executable, encoding="utf-8")
-        logger.debug('Wrote "%s" to "%s"', sys.executable, str(save_path))
+        logger.debug('Wrote "%s" to "%s".', sys.executable, str(save_path))
         logger.info("Please restart Ghidra for these changes to take effect.")
     except Exception as e:
-        logger.error('Failed to write "%s" to "%s" (%s)', sys.executable, str(save_path), e)
+        logger.error('Failed to write "%s" to "%s" (%s).', sys.executable, str(save_path), e)
         return -1
 
     return 0
@@ -47,9 +47,9 @@ def main(args):
 
 if __name__ == "__main__":
     """ """
-    parser = argparse.ArgumentParser(description="Configure the running Python interpreter for Ghidrathon.")
+    parser: argparse.ArgumentParser = argparse.ArgumentParser(description="Configure the running Python interpreter for Ghidrathon")
 
-    parser.add_argument("ghidrathon_install_directory", type=str, help="Absolute path of Ghidra install directory")
+    parser.add_argument("ghidrathon_install_directory", type=pathlib.Path, help="Absolute path of Ghidra install directory")
     parser.add_argument("-d", "--debug", action="store_true", help="Show debug messages")
 
     sys.exit(main(parser.parse_args()))
