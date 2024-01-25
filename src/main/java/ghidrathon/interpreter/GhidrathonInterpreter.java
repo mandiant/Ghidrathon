@@ -79,9 +79,7 @@ public class GhidrathonInterpreter {
     // we must configure Python sys module AFTER the first jep.SharedInterpreter is created
     if (jepPythonSysModuleInitialized.get() == false) {
       jep_.eval(
-          String.format(
-              "import sys;sys.executable=sys._base_executable=r\"%s\"",
-              this.pythonFile));
+          String.format("import sys;sys.executable=sys._base_executable=r\"%s\"", this.pythonFile));
       // site module configures other necessary sys vars, e.g. sys.prefix, using sys.executable
       jep_.eval("import site;site.main()");
       jep_.eval(
@@ -153,21 +151,38 @@ public class GhidrathonInterpreter {
    * @throws FileNotFoundException
    */
   private void configureJepMainInterpreter() throws JepException, FileNotFoundException {
-    // read absolute path of Python interpreter from GHIDRATHON_PYTHON environment variable
-    String pythonFilePath = System.getenv("GHIDRATHON_PYTHON");
-    if (pythonFilePath == null) {
-      throw new JepException(
-          "Could not find environment variable GHIDRATHON_PYTHON. Please set GHIDRATHON_PYTHON to"
-              + " the absolute path of your Python interpreter before running Ghidrathon.");
-    }
-    this.pythonFile = new File(pythonFilePath);
 
-    // validate Python file path exists and is a file
-    if (!(this.pythonFile.exists() && this.pythonFile.isFile())) {
+    File ghidrathonSaveFile =
+        new File(
+            Application.getApplicationRootDirectory().getParentFile().getFile(false),
+            "ghidrathon.save");
+    if (!(ghidrathonSaveFile.exists() && ghidrathonSaveFile.isFile())) {
       throw new JepException(
           String.format(
-              "GHIDRATHON_PYTHON path %s is not valid. Please set GHIDRATHON_PYTHON to the"
-                  + " absolute path of your Python interpreter before running Ghidrathon.",
+              "Failed to find %s. Please configure Ghidrathon before running it.",
+              ghidrathonSaveFile.getAbsolutePath()));
+    }
+
+    Msg.info(
+        GhidrathonInterpreter.class,
+        String.format("Using save file at %s.", ghidrathonSaveFile.getAbsolutePath()));
+
+    // read absolute path of Python interpreter from save file
+    try (BufferedReader reader = new BufferedReader(new FileReader(ghidrathonSaveFile))) {
+      String pythonFilePath = reader.readLine().trim();
+      if (pythonFilePath != null && !pythonFilePath.isEmpty()) {
+        this.pythonFile = new File(pythonFilePath);
+      }
+    } catch (IOException e) {
+      throw new JepException(
+          String.format("Failed to read %s (%s)", ghidrathonSaveFile.getAbsolutePath(), e));
+    }
+
+    // validate Python file path exists and is a file
+    if (this.pythonFile == null || !(this.pythonFile.exists() && this.pythonFile.isFile())) {
+      throw new JepException(
+          String.format(
+              "Python path %s is not valid. Please configure Ghidrathon before running it.",
               this.pythonFile.getAbsolutePath()));
     }
 
