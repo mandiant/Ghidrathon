@@ -32,6 +32,9 @@ import jep.PyConfig;
 /** Utility class used to configure a Jep instance to access Ghidra */
 public class GhidrathonInterpreter {
 
+  private static final String GHIDRATHON_SAVE_FILENAME = "ghidrathon.save";
+  private static final String SUPPORTED_JEP_VERSION = "4.2.0";
+
   private Jep jep_ = null;
   private PrintWriter out = null;
   private PrintWriter err = null;
@@ -87,6 +90,27 @@ public class GhidrathonInterpreter {
               "sys.path.extend([r\"%s\"])",
               Application.getModuleDataSubDirectory(GhidrathonUtils.THIS_EXTENSION_NAME, "python")
                   .getAbsolutePath()));
+
+      // print embedded interpreter configuration to application.log
+      Msg.info(GhidrathonInterpreter.class, "Embedded Python configuration:");
+      Msg.info(
+          GhidrathonInterpreter.class, String.format("Python %s", jep_.getValue("sys.version")));
+
+      String[] sysVars = {
+        "sys.executable",
+        "sys._base_executable",
+        "sys.prefix",
+        "sys.base_prefix",
+        "sys.exec_prefix",
+        "sys.base_exec_prefix"
+      };
+
+      for (String sysVar : sysVars) {
+        Msg.info(
+            GhidrathonInterpreter.class,
+            String.format("%s = \"%s\"", sysVar, jep_.getValue(sysVar)));
+      }
+
       jepPythonSysModuleInitialized.set(true);
     }
 
@@ -155,7 +179,7 @@ public class GhidrathonInterpreter {
     File ghidrathonSaveFile =
         new File(
             Application.getApplicationRootDirectory().getParentFile().getFile(false),
-            "ghidrathon.save");
+            GhidrathonInterpreter.GHIDRATHON_SAVE_FILENAME);
     if (!(ghidrathonSaveFile.exists() && ghidrathonSaveFile.isFile())) {
       throw new JepException(
           String.format(
@@ -235,6 +259,40 @@ public class GhidrathonInterpreter {
     Msg.info(
         GhidrathonInterpreter.class,
         String.format("Using Jep native file at %s.", this.jepNativeFile.getAbsolutePath()));
+
+    File jepVersionFile = new File(this.jepPythonPackageDir, "version.py");
+
+    if (!(jepVersionFile.exists() && jepVersionFile.isFile())) {
+      throw new JepException(
+          String.format(
+              "%s is not valid - could not check Jep version. Please verify your jep installation"
+                  + " works before running Ghidrathon.",
+              jepVersionFile.getAbsolutePath()));
+    }
+
+    boolean isCorrectJepVersion = false;
+    try (BufferedReader br = new BufferedReader(new FileReader(jepVersionFile))) {
+      for (String line; (line = br.readLine()) != null; ) {
+        if (line.contains(GhidrathonInterpreter.SUPPORTED_JEP_VERSION)) {
+          isCorrectJepVersion = true;
+          break;
+        }
+      }
+    } catch (IOException e) {
+      throw new JepException(
+          String.format("Failed to read %s (%s).", jepVersionFile.getAbsolutePath(), e));
+    }
+
+    if (!isCorrectJepVersion) {
+      throw new JepException(
+          String.format(
+              "Please install Jep version %s before running Ghidrathon.",
+              GhidrathonInterpreter.SUPPORTED_JEP_VERSION));
+    }
+
+    Msg.info(
+        GhidrathonInterpreter.class,
+        String.format("Using Jep version %s.", GhidrathonInterpreter.SUPPORTED_JEP_VERSION));
 
     try {
       MainInterpreter.setJepLibraryPath(this.jepNativeFile.getAbsolutePath());
