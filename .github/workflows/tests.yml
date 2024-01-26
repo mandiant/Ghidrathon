@@ -14,10 +14,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ghidra-release-url: ["https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_11.0_build/ghidra_11.0_PUBLIC_20231222.zip"]
+        ghidra-release-url: ["https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_10.3.2_build/ghidra_10.3.2_PUBLIC_20230711.zip", "https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_11.0_build/ghidra_11.0_PUBLIC_20231222.zip"]
         jep-jar-release-url: ["https://github.com/ninia/jep/releases/download/v4.2.0/jep-4.2.0.jar"]
         os: [ubuntu-20.04, windows-2019, macos-11]
-        python-version: ["3.8"]
+        python-version: ["3.8", "3.12"]
     steps:
     - name: Checkout Ghidrathon
       uses: actions/checkout@v4
@@ -36,6 +36,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install Python Jep
       run: |
+        pip install numpy
         pip install jep==4.2.0
         python -c "import importlib.util;import pathlib;print(pathlib.Path(importlib.util.find_spec('jep').origin).parent)"
     - name: Prepare for downloads
