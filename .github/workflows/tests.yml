@@ -40,7 +40,7 @@ jobs:
       if : ${{ matrix.os == 'windows-latest' }}
       run: |
         python -m venv ../tmp/env_test
-        ../tmp/env_test/activate.bat
+        ../tmp/env_test/activate
     - name: Install Python Jep
       run: |
         pip install numpy
