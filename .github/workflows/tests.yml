@@ -42,3 +42,9 @@ jobs:
       run: |
         mkdir ./.github/ghidra
         wget ${{ matrix.ghidra-release-url }} -O ./.github/ghidra/ghidra.zip
+    - name: Download Ghidra Windows
+      if : ${{ matrix.os == 'windows-2019' }}
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -URI ${{ matrix.ghidra-release-url }} -OutFile "./.github/ghidra/ghidra.zip"
+          Expand-Archive -Path "win_flex_bison-2.4.12.zip" -DestinationPath "winflexbison"
