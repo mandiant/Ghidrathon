@@ -60,12 +60,15 @@ jobs:
       run: gradle -PGHIDRA_INSTALL_DIR=${{ github.workspace }}/../tmp/ghidra/ghidra_PUBLIC
     - name: Install Ghidrathon Linux/macOS
       if : ${{ matrix.os != 'windows-2019' }}
-      run: unzip ./dist/$(ls ./dist) -d ../tmp/ghidra/ghidra_PUBLIC/Ghidra/Extensions/
+      run: |
+        unzip ./dist/$(ls ./dist) -d ../tmp/ghidra/ghidra_PUBLIC/Ghidra/Extensions/
     - name: Install Ghidrathon Windows
       if : ${{ matrix.os == 'windows-2019' }}
       shell: pwsh
       run: |
         Rename-Item -Path "./dist/$((Get-ChildItem -Path "./dist").Name)" -NewName "Ghidrathon.zip"
         tar -xf ./dist/Ghidrathon.zip -C ../tmp/ghidra/ghidra_PUBLIC/Ghidra/Extensions/
-    - name: Run test
+    - name: Set Ghidrathon Python interpreter
+      run: python -c "import sys;print(sys.executable)" > ../tmp/ghidra/ghidra_PUBLIC/ghidrathon.save
+    - name: Run tests
       run: ../tmp/ghidra/ghidra_PUBLIC/support/analyzeHeadless ${{ github.workspace }}/../tmp/ghidra test -Import ${{ github.workspace }}/../tmp/ghidra/ghidra_PUBLIC/GPL/DemanglerGnu/os/linux_x86_64/demangler_gnu_v2_24 -PostScript ${{ github.workspace }}/data/python/tests/hello.py
