@@ -45,10 +45,12 @@ jobs:
         wget ${{ matrix.ghidra-release-url }} -O ./tmp/ghidra.zip
         unzip ./tmp/ghidra.zip -d ./tmp/ghidra
         mv ./tmp/ghidra/$(ls ./tmp/ghidra) ./tmp/ghidra/ghidra_PUBLIC
-        ls ./tmp/ghidra
     - name: Download Ghidra Windows
       if : ${{ matrix.os == 'windows-2019' }}
       shell: pwsh
       run: |
         Invoke-WebRequest -URI "${{ matrix.ghidra-release-url }}" -OutFile "./tmp/ghidra.zip"
- 
+        mkdir ./tmp/ghidra
+        tar -xf .\tmp\ghidra.zip -C .\tmp\ghidra
+        Rename-Item -Path "./tmp/ghidra/$((Get-ChildItem -Path "./tmp/ghidra").BaseName)" -NewName "ghidra_PUBLIC"
+        (Get-ChildItem -Path "./tmp/ghidra").BaseName
