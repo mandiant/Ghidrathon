@@ -42,14 +42,14 @@ jobs:
     - name: Prepare for downloads
       run: mkdir ../tmp
     - name: Download dependencies Linux/macOS
-      if : ${{ matrix.os != 'windows-2019' }}
+      if : ${{ matrix.os != 'windows-latest' }}
       run: |
         wget ${{ matrix.ghidra-release-url }} -O ../tmp/ghidra.zip
         unzip ../tmp/ghidra.zip -d ../tmp/ghidra
         mv ../tmp/ghidra/$(ls ../tmp/ghidra) ../tmp/ghidra/ghidra_PUBLIC
         wget ${{ matrix.jep-jar-release-url }} -O ./lib/jep-4.2.0.jar
     - name: Download dependencies Windows
-      if : ${{ matrix.os == 'windows-2019' }}
+      if : ${{ matrix.os == 'windows-latest' }}
       shell: pwsh
       run: |
         Invoke-WebRequest -URI "${{ matrix.ghidra-release-url }}" -OutFile "../tmp/ghidra.zip"
@@ -60,11 +60,11 @@ jobs:
     - name: Build Ghidrathon
       run: gradle -PGHIDRA_INSTALL_DIR=${{ github.workspace }}/../tmp/ghidra/ghidra_PUBLIC
     - name: Install Ghidrathon Linux/macOS
-      if : ${{ matrix.os != 'windows-2019' }}
+      if : ${{ matrix.os != 'windows-latest' }}
       run: |
         unzip ./dist/$(ls ./dist) -d ../tmp/ghidra/ghidra_PUBLIC/Ghidra/Extensions/
     - name: Install Ghidrathon Windows
-      if : ${{ matrix.os == 'windows-2019' }}
+      if : ${{ matrix.os == 'windows-latest' }}
       shell: pwsh
       run: |
         Rename-Item -Path "./dist/$((Get-ChildItem -Path "./dist").Name)" -NewName "Ghidrathon.zip"
