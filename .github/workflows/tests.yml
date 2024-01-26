@@ -18,7 +18,7 @@ jobs:
         gradle-version: ["7.3"]
         ghidra-version: ["11.0"]
         public-version: ["PUBLIC_20231222"] # for ghidra releases
-        os: [ubuntu-20.04]
+        os: [ubuntu-20.04, windows-2019, macos-11]
         # across all operating systems
         python-version: ["3.8", "3.12"]
         include:
