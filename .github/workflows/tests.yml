@@ -14,27 +14,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java-version: ["17"]
-        gradle-version: ["7.3"]
         ghidra-version: ["11.0"]
-        public-version: ["PUBLIC_20231222"] # for ghidra releases
+        public-version: ["PUBLIC_20231222"]
         os: [ubuntu-20.04, windows-2019, macos-11]
-        # across all operating systems
         python-version: ["3.8", "3.12"]
-        include:
-          # on Ubuntu run these as well
-          - os: ubuntu-20.04
-            python-version: "3.9"
-          - os: ubuntu-20.04
-            python-version: "3.10"
-          - os: ubuntu-20.04
-            python-version: "3.11"
     steps:
     - name: Checkout Ghidrathon
       uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: "temurin"
+        java-version: "17"
+    - name: Setup Gradle
+      uses: gradle/gradle-build-action@v2
+      with:
+        gradle-version: "7.3"
+    - name: Setup Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install Jep
+    - name: Install Python Jep
       run: pip install jep==4.2.0
+      run: python -c "import importlib.util;import pathlib;print(pathlib.Path(importlib.util.find_spec('jep').origin).parent)"
