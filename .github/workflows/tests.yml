@@ -43,7 +43,7 @@ jobs:
       if : ${{ matrix.os != 'windows-2019' }}
       run: |
         wget ${{ matrix.ghidra-release-url }} -O ./tmp/ghidra.zip
-        unzip ./tmp/ghidra.zip-d ./tmp/ghidra
+        unzip ./tmp/ghidra.zip ./tmp/ghidra
         mv ./tmp/ghidra/$(ls ghidra) ./tmp/ghidra/ghidra_PUBLIC
         ls ./tmp/ghidra
     - name: Download Ghidra Windows
