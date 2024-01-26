@@ -36,4 +36,4 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install Python Jep
       run: pip install jep==4.2.0
-      run: python -c "import importlib.util;import pathlib;print(pathlib.Path(importlib.util.find_spec('jep').origin).parent)"
+    - run: python -c "import importlib.util;import pathlib;print(pathlib.Path(importlib.util.find_spec('jep').origin).parent)"
