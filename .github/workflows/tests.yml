@@ -69,6 +69,8 @@ jobs:
         Rename-Item -Path "./dist/$((Get-ChildItem -Path "./dist").Name)" -NewName "Ghidrathon.zip"
         tar -xf ./dist/Ghidrathon.zip -C ../tmp/ghidra/ghidra_PUBLIC/Ghidra/Extensions/
     - name: Set Ghidrathon Python interpreter
-      run: python -c "import sys;print(sys.executable)" > ../tmp/ghidra/ghidra_PUBLIC/ghidrathon.save
+      run: python util/ghidrathon_configure.py ../tmp/ghidra/ghidra_PUBLIC
     - name: Run tests
-      run: ../tmp/ghidra/ghidra_PUBLIC/support/analyzeHeadless ${{ github.workspace }}/../tmp/ghidra test -Import ${{ github.workspace }}/../tmp/ghidra/ghidra_PUBLIC/GPL/DemanglerGnu/os/linux_x86_64/demangler_gnu_v2_24 -PostScript ${{ github.workspace }}/data/python/tests/hello.py -PostScript ${{ github.workspace }}/data/python/tests/runall.py
+      run: |
+        ../tmp/ghidra/ghidra_PUBLIC/support/analyzeHeadless ${{ github.workspace }}/../tmp/ghidra test -Import ${{ github.workspace }}/../tmp/ghidra/ghidra_PUBLIC/GPL/DemanglerGnu/os/linux_x86_64/demangler_gnu_v2_24 -PostScript ${{ github.workspace }}/data/python/tests/hello.py -PostScript ${{ github.workspace }}/data/python/tests/runall.py
+        python -c "import pathlib, sys; sys.exit(0 if pathlib.Path('hell0.txt').exists() else -1)"
