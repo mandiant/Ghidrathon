@@ -54,4 +54,4 @@ jobs:
         tar -xf .\tmp\ghidra.zip -C .\tmp\ghidra
         Rename-Item -Path "./tmp/ghidra/$((Get-ChildItem -Path "./tmp/ghidra").BaseName)" -NewName "ghidra_PUBLIC"
     - name: Build Ghidrathon
-      run: gradle -PGHIDRA_INSTALL_DIR=${{ GITHUB_WORKSPACE }}/tmp/ghidra/ghidra_PUBLIC
+      run: gradle -PGHIDRA_INSTALL_DIR=${{ github.workspace }}/tmp/ghidra/ghidra_PUBLIC
