@@ -14,8 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ghidra-version: ["11.0"]
-        public-version: ["PUBLIC_20231222"]
+        ghidra-release-url: ["https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_11.0_build/ghidra_11.0_PUBLIC_20231222.zip"]
         os: [ubuntu-20.04, windows-2019, macos-11]
         python-version: ["3.8", "3.12"]
     steps:
@@ -35,5 +34,10 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install Python Jep
-      run: pip install jep==4.2.0
-    - run: python -c "import importlib.util;import pathlib;print(pathlib.Path(importlib.util.find_spec('jep').origin).parent)"
+      run: |
+        pip install jep==4.2.0
+        python -c "import importlib.util;import pathlib;print(pathlib.Path(importlib.util.find_spec('jep').origin).parent)"
+    - name: Download Ghidra
+      run: |
+        mkdir ./.github/ghidra
+        wget ${{ matrix.ghidra-release-url }} -O ./.github/ghidra/ghidra.zip
