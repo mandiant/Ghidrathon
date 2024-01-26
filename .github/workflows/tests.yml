@@ -53,8 +53,17 @@ jobs:
       run: |
         Invoke-WebRequest -URI "${{ matrix.ghidra-release-url }}" -OutFile "./tmp/ghidra.zip"
         mkdir ./tmp/ghidra
-        tar -xf .\tmp\ghidra.zip -C .\tmp\ghidra
+        tar -xf ./tmp/ghidra.zip -C ./tmp/ghidra
         Rename-Item -Path "./tmp/ghidra/$((Get-ChildItem -Path "./tmp/ghidra").BaseName)" -NewName "ghidra_PUBLIC"
         Invoke-WebRequest -URI "${{ matrix.jep-jar-release-url }}" -OutFile "./lib/jep-4.2.0.jar"
     - name: Build Ghidrathon
       run: gradle -PGHIDRA_INSTALL_DIR=${{ github.workspace }}/tmp/ghidra/ghidra_PUBLIC
+    - name: Install Ghidrathon Linux/macOS
+      if : ${{ matrix.os != 'windows-2019' }}
+      run: unzip ./dist/$(ls ./dist) -d ./tmp/ghidra/ghidra_PUBLIC/Ghidra/Extensions/
+    - name: Install Ghidrathon Windows
+      if : ${{ matrix.os == 'windows-2019' }}
+      shell: pwsh
+      run: |
+        Rename-Item -Path "./dist/$((Get-ChildItem -Path "./dist").BaseName)" -NewName "Ghidrathon.zip"
+        tar -xf ./dist/Ghidrathon.zip -C ./tmp/ghidra/ghidra_PUBLIC/Ghidra/Extensions/
