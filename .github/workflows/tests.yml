@@ -37,7 +37,8 @@ jobs:
       run: |
         pip install jep==4.2.0
         python -c "import importlib.util;import pathlib;print(pathlib.Path(importlib.util.find_spec('jep').origin).parent)"
-    - name: Download Ghidra
+    - name: Download Ghidra Linux/macOS
+      if : ${{ matrix.os != "windows-2019" }}
       run: |
         mkdir ./.github/ghidra
         wget ${{ matrix.ghidra-release-url }} -O ./.github/ghidra/ghidra.zip
