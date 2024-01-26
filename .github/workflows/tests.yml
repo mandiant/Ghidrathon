@@ -15,6 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         ghidra-release-url: ["https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_11.0_build/ghidra_11.0_PUBLIC_20231222.zip"]
+        jep-jar-release-url: ["https://github.com/ninia/jep/releases/download/v4.2.0/jep-4.2.0.jar"]
         os: [ubuntu-20.04, windows-2019, macos-11]
         python-version: ["3.8"]
     steps:
@@ -39,13 +40,14 @@ jobs:
         python -c "import importlib.util;import pathlib;print(pathlib.Path(importlib.util.find_spec('jep').origin).parent)"
     - name: Prepare for downloads
       run: mkdir ./tmp
-    - name: Download Ghidra Linux/macOS
+    - name: Download dependencies Linux/macOS
       if : ${{ matrix.os != 'windows-2019' }}
       run: |
         wget ${{ matrix.ghidra-release-url }} -O ./tmp/ghidra.zip
         unzip ./tmp/ghidra.zip -d ./tmp/ghidra
         mv ./tmp/ghidra/$(ls ./tmp/ghidra) ./tmp/ghidra/ghidra_PUBLIC
-    - name: Download Ghidra Windows
+        wget ${{ matrix.jep-jar-release-url }} -O ./lib/jep-4.2.0.jar
+    - name: Download dependencies Windows
       if : ${{ matrix.os == 'windows-2019' }}
       shell: pwsh
       run: |
@@ -53,5 +55,6 @@ jobs:
         mkdir ./tmp/ghidra
         tar -xf .\tmp\ghidra.zip -C .\tmp\ghidra
         Rename-Item -Path "./tmp/ghidra/$((Get-ChildItem -Path "./tmp/ghidra").BaseName)" -NewName "ghidra_PUBLIC"
+        Invoke-WebRequest -URI "${{ matrix.jep-jar-release-url }}" -OutFile "./lib/jep-4.2.0.jar"
     - name: Build Ghidrathon
       run: gradle -PGHIDRA_INSTALL_DIR=${{ github.workspace }}/tmp/ghidra/ghidra_PUBLIC
