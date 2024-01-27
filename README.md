@@ -80,7 +80,7 @@ For more information on how Jep works to embed Python in Java see their document
 Tool | Version |Source |
 |---|---|---|
 | Ghidrathon | `>= 4.0.0` | https://github.com/mandiant/Ghidrathon/releases |
-| Python | `>= 3.8` | https://www.python.org/downloads |
+| Python | `>= 3.8.0` | https://www.python.org/downloads |
 | Jep | `4.2.0` | https://github.com/ninia/jep/releases |
 | Ghidra | `>= 10.3.2` | https://github.com/NationalSecurityAgency/ghidra/releases |
 | Java | `>= 17.0.0` | https://adoptium.net/temurin/releases/ |
@@ -107,7 +107,7 @@ $ python ghidrathon_configure.py <absolute_path_to_ghidra_install_dir>
 
 ### Switching Python Interpreters
 
-You can switch Ghidrathon to use a different Python interpreter by running `ghidrathon_configure.py` from the new Python interpreter.
+You can switch Ghidrathon to use a different Python interpreter by running `ghidrathon_configure.py` using the new Python interpreter.
 
 ### Python Virtual Environments
 
