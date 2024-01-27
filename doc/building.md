@@ -1,8 +1,6 @@
 # Building Ghidrathon
 
-## Building Ghidrathon
-
-### Requirements
+## Requirements
 
 Tool | Version |Source |
 |---|---|---|
