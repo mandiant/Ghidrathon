@@ -1,5 +1,5 @@
 # Run Ghidrathon unit tests.
-# @author Mike Hunhoff (michael.hunhoff@mandiant.com)
+# @author Mike Hunhoff (mehunhoff@google.com)
 # @category Python 3
 # Copyright (C) 2024 Mandiant, Inc. All Rights Reserved.
 # Licensed under the Apache License, Version 2.0 (the "License");
