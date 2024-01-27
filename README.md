@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)](LICENSE.txt)
 
-Ghidrathon is a Ghidra extension that adds Python 3 scripting capabilities to Ghidra. Why? Ghidra natively supports scripting in Java and Jython. Unfortunately many open-source analysis tools, like [capa](https://github.com/mandiant/capa), [Unicorn Engine](https://github.com/unicorn-engine/unicorn), [angr](https://github.com/angr/angr), etc., are written in Python 3 making it difficult, and in some cases, impossible to use these tools in Ghidra. More so the security community has released several great plugins for other SRE frameworks like IDA Pro and Binary Ninja, but again, because many of these plugins use Python 3 it is difficult to port them to Ghidra. Ghidrathon helps you use existing and develop new Python 3 tooling in Ghidra and script Ghidra using modern Python in a way that tightly integrates with Ghidra's UI.
+Ghidrathon is a Ghidra extension that adds Python 3 scripting capabilities to Ghidra. Why? Ghidra natively supports scripting in Java and Jython. Unfortunately, many open-source analysis tools, like [capa](https://github.com/mandiant/capa), [Unicorn Engine](https://github.com/unicorn-engine/unicorn), [angr](https://github.com/angr/angr), etc., are written in Python 3 making it difficult, and in some cases, impossible to use these tools in Ghidra. More so the security community has released several great plugins for other SRE frameworks like IDA Pro and Binary Ninja, but again, because many of these plugins use Python 3 it is difficult to port them to Ghidra. Ghidrathon helps you use existing and develop new Python 3 tooling in Ghidra and script Ghidra using modern Python in a way that tightly integrates with Ghidra's UI.
 
 Check out:
 
@@ -54,7 +54,7 @@ INFO  REPORT: Post-analysis succeeded for file: /example.o (HeadlessAnalyzer)
 INFO  REPORT: Save succeeded for processed file: /example.o (HeadlessAnalyzer)
 ```
 
-For more information on running Ghidra in headless mode check out `<ghidra_install>/support/analyzeHeadlessREADME.html`.
+For more information on running Ghidra in headless mode check out `<absolute_path_to_ghidra_install_dir>/support/analyzeHeadlessREADME.html`.
 
 ## Third-Party Python Modules
 
@@ -87,7 +87,7 @@ Tool | Version |Source |
 
 Use the following steps to install Ghidrathon to your Ghidra environment:
 
-1. Install `Jep`:
+1. Install Jep:
 ```python
 $ python -m pip install jep==4.2.0
 ```
@@ -95,15 +95,15 @@ $ python -m pip install jep==4.2.0
 ```python
 $ python ghidrathon_configure.py <absolute_path_to_ghidra_install_dir>
 ```
-3. Download and unzip the latest `Ghidrathon` [release](https://github.com/mandiant/Ghidrathon/releases)
-4. Install the `Ghidrathon` extension (`.zip`) into Ghidra:
+3. Download and unzip the latest Ghidrathon [release](https://github.com/mandiant/Ghidrathon/releases)
+4. Install the Ghidrathon extension (`.zip`) into Ghidra:
    * Using Ghidra's UI:
         * Navigate to `File > Install Extensions...`
         * Click the green `+` button
-        * Navigate to the `Ghidrathon` extension (`.zip`)
+        * Navigate to the Ghidrathon extension (`.zip`)
         * Click `Ok`
     * Using a limited environment:
-        * Extract the `Ghidrathon` extension (`.zip`)  to `<absolute_path_to_ghidra_install_dir>\Ghidra\Extensions`
+        * Extract the Ghidrathon extension (`.zip`)  to `<absolute_path_to_ghidra_install_dir>\Ghidra\Extensions`
 
 ### Switching Python Interpreters
 
@@ -125,13 +125,13 @@ Tool | Version |Source |
 | Gradle | `>= 7.3` | https://gradle.org/releases |
 
 Use the following steps to build Ghidrathon:
-1. Download the [supported `Jep` JAR release](https://github.com/ninia/jep/releases/download/v4.2.0/jep-4.2.0.jar) to `<absolute_path_to_ghidrathon_source_dir>/lib`
+1. Download the [supported Jep JAR release](https://github.com/ninia/jep/releases/download/v4.2.0/jep-4.2.0.jar) to `<absolute_path_to_ghidrathon_source_dir>\lib`
 2. Execute gradle from `<absolute_path_to_ghidrathon_source_dir>`:
 ```
 $ gradle -PGHIDRA_INSTALL_DIR=<absolute_path_to_Ghidra_install_dir>
 ```
 
-The extension is stored in `<absolute_path_to_ghidrathon_source_dir>/dist`.
+The extension is stored in `<absolute_path_to_ghidrathon_source_dir>\dist`.
 
 ## Considerations
 
