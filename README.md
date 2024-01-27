@@ -1,8 +1,9 @@
 # Ghidrathon
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)](LICENSE.txt)
+[![CI](https://github.com/mandiant/ghidrathon/actions/workflows/tests.yml/badge.svg)](https://github.com/mandiant/ghidrathon/actions/workflows/tests.yml)
 
-Ghidrathon is a Ghidra extension that adds Python 3 scripting capabilities to Ghidra. Why? Ghidra natively supports scripting in Java and Jython. Unfortunately many open-source analysis tools, like [capa](https://github.com/mandiant/capa), [Unicorn Engine](https://github.com/unicorn-engine/unicorn), [angr](https://github.com/angr/angr), etc., are written in Python 3 making it difficult, and in some cases, impossible to use these tools in Ghidra. More so the security community has released several great plugins for other SRE frameworks like IDA Pro and Binary Ninja, but again, because many of these plugins use Python 3 it is difficult to port them to Ghidra. Ghidrathon helps you use existing and develop new Python 3 tooling in Ghidra and script Ghidra using modern Python in a way that tightly integrates with Ghidra's UI.
+Ghidrathon is a Ghidra extension that adds Python 3 scripting capabilities to Ghidra. Why? Ghidra natively supports scripting in Java and Jython. Unfortunately, many open-source analysis tools, like [capa](https://github.com/mandiant/capa), [Unicorn Engine](https://github.com/unicorn-engine/unicorn), [angr](https://github.com/angr/angr), etc., are written in Python 3 making it difficult, and in some cases, impossible to use these tools in Ghidra. More so the security community has released several great plugins for other SRE frameworks like IDA Pro and Binary Ninja, but again, because many of these plugins use Python 3 it is difficult to port them to Ghidra. Ghidrathon helps you use existing and develop new Python 3 tooling in Ghidra and script Ghidra using modern Python in a way that tightly integrates with Ghidra's UI.
 
 Check out:
 
@@ -54,7 +55,7 @@ INFO  REPORT: Post-analysis succeeded for file: /example.o (HeadlessAnalyzer)
 INFO  REPORT: Save succeeded for processed file: /example.o (HeadlessAnalyzer)
 ```
 
-For more information on running Ghidra in headless mode check out `<ghidra_install>/support/analyzeHeadlessREADME.html`.
+For more information on running Ghidra in headless mode check out `<absolute_path_to_ghidra_install_dir>/support/analyzeHeadlessREADME.html`.
 
 ## Third-Party Python Modules
 
@@ -74,87 +75,44 @@ Ghidrathon links your local Python installation to Ghidra using the open-source 
 
 For more information on how Jep works to embed Python in Java see their documentation [here](https://github.com/ninia/jep/wiki/How-Jep-Works).
 
-## OS Support
-
-Ghidrathon supports the following operating systems:
-
-* Linux
-* Windows
-* macOS (x86_64)
-
-## Requirements
-
-The following tools are needed to build, install, and run Ghidrathon:
-
-Tool | Version |Source |
-|---|---|---|
-| Ghidra | `>= 10.3` | https://ghidra-sre.org |
-| Jep | `4.2.0` | https://github.com/ninia/jep |
-| Gradle | `>= 7.3` | https://gradle.org/releases |
-| Python | `>= 3.8` | https://www.python.org/downloads |
-
-Note: Ghidra >= 10.2 requires [JDK 17 64-bit](https://adoptium.net/temurin/releases/).
-
-## Python Virtual Environments
-
-Ghidrathon supports Python virtual environments. To use a Python virtual environment, simply build Ghidrathon inside your virtual environment **and** execute Ghidra inside the **same** virtual environment.
-
-## Building Ghidrathon
-
-**Note:** Review [Python Virtual Environments](#python-virtual-environments) before building if you would like to use a Python virtual environment for Ghidrathon.
-
-**Note**: Building Ghidrathon requires building Jep. If you are running Windows, this requires installing the Microsoft C++ Build Tools found [here](https://visualstudio.microsoft.com/visual-cpp-build-tools/). See Jep's documentation [here](https://github.com/ninia/jep/wiki/Windows) for more information on installing Jep on Windows.
-
-Use the following steps to build Ghidrathon for your environment:
-
-* Install Ghidra using the documentation [here](https://htmlpreview.github.io/?https://github.com/NationalSecurityAgency/ghidra/blob/stable/GhidraDocs/InstallationGuide.html#InstallationNotes)
-* Install Gradle from [here](https://gradle.org/releases)
-* Download the latest Ghidrathon source release from [here](https://github.com/mandiant/Ghidrathon/releases)
-* Run the following command from the Ghidrathon source directory:
-    * **Note:** Ghidrathon defaults to the Python binary found in your path. You can specify a different Python binary by adding the optional argument `-PPYTHON_BIN=<absolute path to Python binary>` to the command below
-    * **Note:** you may optionally set an environment variable named `GHIDRA_INSTALL_DIR` instead of specifying `-PGHIDRA_INSTALL_DIR`
-
-```
-$ gradle -PGHIDRA_INSTALL_DIR=<absolute path to Ghidra install>
-```
-
-This command installs Jep, configures Ghidrathon with the necessary Jep binaries, and builds Ghidrathon. If successful, you will find a new directory in your Ghidrathon source directory named `dist` containing your Ghidrathon extension (`.zip`). Please open a new issue if you experience any issues building Ghidrathon.
-
 ## Installing Ghidrathon
 
-Use the following steps to install your Ghidrathon extension using the Ghidra UI:
+### Requirements
+Tool | Version |Source |
+|---|---|---|
+| Ghidrathon | `>= 4.0.0` | https://github.com/mandiant/Ghidrathon/releases |
+| Python | `>= 3.8.0` | https://www.python.org/downloads |
+| Jep | `4.2.0` | https://github.com/ninia/jep/releases |
+| Ghidra | `>= 10.3.2` | https://github.com/NationalSecurityAgency/ghidra/releases |
+| Java | `>= 17.0.0` | https://adoptium.net/temurin/releases/ |
 
-* Start Ghidra
-* Navigate to `File > Install Extensions...`
-* Click the green `+` button
-* Navigate to your Ghidrathon extension built earlier (`.zip`)
-* Click `Ok`
-* Restart Ghidra
+Use the following steps to install Ghidrathon to your Ghidra environment:
 
-**OR**
+1. Install Jep:
+```
+$ python -m pip install jep==4.2.0
+```
+2. Execute `ghidrathon_configure.py`:
+```
+$ python ghidrathon_configure.py <absolute_path_to_ghidra_install_dir>
+```
+3. Download and unzip the latest Ghidrathon [release](https://github.com/mandiant/Ghidrathon/releases)
+4. Install the Ghidrathon extension (`.zip`) into Ghidra:
+   * Using Ghidra's UI:
+        * Navigate to `File > Install Extensions...`
+        * Click the green `+` button
+        * Navigate to the Ghidrathon extension (`.zip`)
+        * Click `Ok`
+    * Using a limited environment:
+        * Extract the Ghidrathon extension (`.zip`)  to `<absolute_path_to_ghidra_install_dir>\Ghidra\Extensions`
 
-Extract your Ghidrathon extension (`.zip`) directly to `<absolute path to Ghidra install>\Ghidra\Extensions` to automatically enable Ghidrathon the next time that Ghidra is started. This method works great if you do not have access to the Ghidra UI when installing Ghidrathon.
+### Switching Python Interpreters
 
-### Disabling Jython
+You can switch Ghidrathon to use a different Python interpreter by running `ghidrathon_configure.py` using the new Python interpreter.
 
-Ghidrathon disables the built-in Jython script provider to avoid conflicts when Ghidra decides which provider should handle scripts with the `.py` file extension. This means existing Jython scripts cannot be executed with Ghidrathon installed. We recommend completely disabling the Jython extension.
+### Python Virtual Environments
 
-Use the following steps to disable the Jython extension:
-
-* Open a CodeBrowser window (*not the Project Manager window*)
-* Navigate to `File > Configure...`
-* Click `Ghidra Core`
-* Un-check `PythonPlugin`
-
-Use the following steps to enable the Jython extension:
-
-* Uninstall Ghidrathon
-* Enable the Jython extension using the steps outlined above
-* Restart Ghidra
-
-## Using Ghidrathon
-
-See [Python 3 Interpreter Window](#python-3-interpreter-window), [Ghidra Script Manager Integration](#ghidra-script-manager-integration), and [Ghidra Headless Mode](#ghidra-headless-mode) for more information about using Ghidrathon.
+Ghidrathon supports Python virtual environments. To use a Python virtual environment, complete steps `1` and `2` using the Python interpreter that is configured for your environment. Do the same when running `ghidrathon_configure.py` to switch the Ghidrathon to use a different interpreter.
 
 ## Considerations
 

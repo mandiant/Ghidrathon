@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+
+  tests:
+    name: Tests in ${{ matrix.python-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        ghidra-release-url: ["https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_10.3.2_build/ghidra_10.3.2_PUBLIC_20230711.zip", "https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_11.0_build/ghidra_11.0_PUBLIC_20231222.zip"]
+        jep-jar-release-url: ["https://github.com/ninia/jep/releases/download/v4.2.0/jep-4.2.0.jar"]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.8", "3.12"]
+    steps:
+    - name: Checkout Ghidrathon
+      uses: actions/checkout@v4
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: "temurin"
+        java-version: "17"
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
+      with:
+        gradle-version: "7.3"
+    - name: Setup Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Configure temp folder
+      run: mkdir ../tmp
+    - name: Install Python Jep
+      run: |
+        pip install numpy
+        pip install jep==4.2.0
+        python -c "import importlib.util;import pathlib;print(pathlib.Path(importlib.util.find_spec('jep').origin).parent)"
+    - name: Download dependencies Linux/macOS
+      if : ${{ matrix.os != 'windows-latest' }}
+      run: |
+        wget ${{ matrix.ghidra-release-url }} -O ../tmp/ghidra.zip
+        unzip ../tmp/ghidra.zip -d ../tmp/ghidra
+        mv ../tmp/ghidra/$(ls ../tmp/ghidra) ../tmp/ghidra/ghidra_PUBLIC
+        wget ${{ matrix.jep-jar-release-url }} -O ./lib/jep-4.2.0.jar
+    - name: Download dependencies Windows
+      if : ${{ matrix.os == 'windows-latest' }}
+      shell: pwsh
+      run: |
+        Invoke-WebRequest -URI "${{ matrix.ghidra-release-url }}" -OutFile "../tmp/ghidra.zip"
+        mkdir ../tmp/ghidra
+        tar -xf ../tmp/ghidra.zip -C ../tmp/ghidra
+        Rename-Item -Path "../tmp/ghidra/$((Get-ChildItem -Path "../tmp/ghidra").Name)" -NewName "ghidra_PUBLIC"
+        Invoke-WebRequest -URI "${{ matrix.jep-jar-release-url }}" -OutFile "./lib/jep-4.2.0.jar"
+    - name: Build Ghidrathon
+      run: gradle -PGHIDRA_INSTALL_DIR=${{ github.workspace }}/../tmp/ghidra/ghidra_PUBLIC
+    - name: Install Ghidrathon Linux/macOS
+      if : ${{ matrix.os != 'windows-latest' }}
+      run: |
+        unzip ./dist/$(ls ./dist) -d ../tmp/ghidra/ghidra_PUBLIC/Ghidra/Extensions/
+    - name: Install Ghidrathon Windows
+      if : ${{ matrix.os == 'windows-latest' }}
+      shell: pwsh
+      run: |
+        Rename-Item -Path "./dist/$((Get-ChildItem -Path "./dist").Name)" -NewName "Ghidrathon.zip"
+        tar -xf ./dist/Ghidrathon.zip -C ../tmp/ghidra/ghidra_PUBLIC/Ghidra/Extensions/
+    - name: Set Ghidrathon Python interpreter
+      run: python util/ghidrathon_configure.py ../tmp/ghidra/ghidra_PUBLIC
+    - name: Run tests
+      run: |
+        ../tmp/ghidra/ghidra_PUBLIC/support/analyzeHeadless ${{ github.workspace }}/../tmp/ghidra test -Import ${{ github.workspace }}/../tmp/ghidra/ghidra_PUBLIC/GPL/DemanglerGnu/os/linux_x86_64/demangler_gnu_v2_24 -PostScript ${{ github.workspace }}/data/python/tests/hello.py -PostScript ${{ github.workspace }}/data/python/tests/runall.py
+        python -c "import pathlib, sys; sys.exit(0 if pathlib.Path('hello.txt').exists() else -1)"

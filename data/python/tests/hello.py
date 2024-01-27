@@ -1,4 +1,4 @@
-# Run Ghidrathon unit tests.
+# Run Ghidrathon CI tests.
 # @author Mike Hunhoff (mehunhoff@google.com)
 # @category Python 3
 # Copyright (C) 2024 Mandiant, Inc. All Rights Reserved.
@@ -9,23 +9,8 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
-"""Light harness used to run Python tests
-
-Note: you must run this harness from the Ghidra script manager or headless mode
-"""
-
-import unittest
 import pathlib
+import jep
 
-
-def main():
-    loader = unittest.TestLoader()
-
-    directory = str(pathlib.Path(__file__).resolve().parent)
-
-    suite = loader.discover(directory, pattern="test_*.py")
-    _ = unittest.TextTestRunner(verbosity=2, failfast=True).run(suite)
-
-
-if __name__ == "__main__":
-    main()
+path = pathlib.Path("hello.txt")
+path.write_text(f"Hello from Jep {jep.__version__}", encoding="utf-8")

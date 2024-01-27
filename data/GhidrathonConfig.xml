@@ -3,10 +3,5 @@
     <ARRAY NAME="JAVA_EXCLUDE_LIBS" TYPE="string">
         <A VALUE="pdb" />
     </ARRAY>
-    <ARRAY NAME="PYTHON_SHARED_MODULES" TYPE="string">
-        <A VALUE="numpy" />
-    </ARRAY>
-    <ARRAY NAME="PYTHON_INCLUDE_PATHS" TYPE="string">
-    </ARRAY>
 </GHIDRATHON_CONFIG>
 
