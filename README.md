@@ -109,7 +109,7 @@ You can switch Ghidrathon to use a different Python interpreter by running `ghid
 
 ### Python Virtual Environments
 
-Ghidrathon supports Python virtual environments. To use a Python virtual environment, complete steps `1` and `2` using the Python interpreter that is configured for your environment. Do the same when running `ghidrathon_configure.py` to switch the Ghidrathon to use a different interpreter.
+Ghidrathon supports Python virtual environments. **To use a Python virtual environment, complete step `1` from within your virtual environment.** Do the same when running `ghidrathon_configure.py` to switch the Ghidrathon to use a different interpreter.
 
 ## Considerations
 
