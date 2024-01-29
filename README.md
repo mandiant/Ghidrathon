@@ -88,16 +88,13 @@ Tool | Version |Source |
 
 Use the following steps to install Ghidrathon to your Ghidra environment:
 
-1. Install Jep:
+1. Execute the following commands using the Python interpreter that you'd like to use with Ghidrathon:
 ```
 $ python -m pip install jep==4.2.0
-```
-2. Execute `ghidrathon_configure.py`:
-```
 $ python ghidrathon_configure.py <absolute_path_to_ghidra_install_dir>
 ```
-3. Download and unzip the latest Ghidrathon [release](https://github.com/mandiant/Ghidrathon/releases)
-4. Install the Ghidrathon extension (`.zip`) into Ghidra:
+2. Download and unzip the latest Ghidrathon [release](https://github.com/mandiant/Ghidrathon/releases)
+3. Install the Ghidrathon extension (`.zip`) into Ghidra:
    * Using Ghidra's UI:
         * Navigate to `File > Install Extensions...`
         * Click the green `+` button
