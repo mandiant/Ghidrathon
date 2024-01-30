@@ -80,6 +80,26 @@ def main(args):
         logger.error('Failed to write "%s" to "%s" (%s).', python_path, save_path, e)
         return -1
 
+    try:
+        logger.debug("Python configuration:")
+        logger.debug("Python %s", sys.version)
+
+        for k, v in {
+            "sys.executable": sys.executable,
+            "sys._base_executable": sys._base_executable,
+            "sys.prefix": sys.prefix,
+            "sys.base_prefix": sys.base_prefix,
+            "sys.exec_prefix": sys.exec_prefix,
+            "sys.base_exec_prefix": sys.base_exec_prefix,
+        }.items():
+            logger.debug('%s: "%s"', k, v)
+    except Exception as e:
+        logger.error(
+            "Failed to verify Python environment (%s). Please verify your Python environment is correct before configuring Ghidrathon.",
+            e,
+        )
+        return -1
+
     logger.debug('Wrote "%s" to "%s".', python_path, save_path)
     logger.info(
         'Ghidrathon has been configured to use the Python interpreter located at "%s". Please restart Ghidra for these changes to take effect.',
