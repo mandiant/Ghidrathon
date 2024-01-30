@@ -6,11 +6,14 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
+import importlib
 import argparse
 import pathlib
 import logging
 import sys
 
+
+SUPPORTED_JEP_VERSION = "4.2.0"
 
 logger = logging.getLogger(__name__)
 
@@ -28,20 +31,60 @@ def main(args):
     if args.debug:
         logger.setLevel(logging.DEBUG)
 
+    jep_spec = importlib.util.find_spec("jep")
+    if jep_spec is None:
+        logger.error(
+            "Jep is not installed. Please install Jep version %s before configuring Ghidrathon.", SUPPORTED_JEP_VERSION
+        )
+        return -1
+
+    jep_version_file: pathlib.path = pathlib.Path(jep_spec.origin).parent / "version.py"
+    if not all((jep_version_file.exists(), jep_version_file.is_file())):
+        logger.error(
+            "Jep file %s is not valid. Please verify your Jep install is correct before configuring Ghidrathon.",
+            jep_version_file,
+        )
+        return -1
+
+    logger.debug('Verifying Jep version.py file located at "%s".', jep_version_file)
+
+    if SUPPORTED_JEP_VERSION not in jep_version_file.read_text(encoding="utf-8"):
+        logger.error(
+            "Jep version is not supported. Please install Jep version %s before configuring Ghidrathon.",
+            SUPPORTED_JEP_VERSION,
+        )
+        return -1
+
     install_path: pathlib.Path = args.ghidrathon_install_directory
     if not all((install_path.exists(), install_path.is_dir())):
-        logger.error('"%s" does not exist or is not a directory.', str(install_path))
+        logger.error(
+            'Ghidra install directory "%s" is not valid. Please specify the absolute path of your Ghidra install directory.',
+            install_path,
+        )
         return -1
+
+    python_path: pathlib.Path = pathlib.Path("None" if not sys.executable else sys.executable)
+    if not all((python_path.exists(), python_path.is_file())):
+        logger.error(
+            'sys.executable value "%s" is not valid. Please verify your Python environment is correct before configuring Ghidrathon.',
+            python_path,
+        )
+        return -1
+
+    logger.debug('Using Python interpreter located at "%s".', python_path)
 
     save_path: pathlib.Path = install_path / "ghidrathon.save"
     try:
-        save_path.write_text(sys.executable, encoding="utf-8")
+        save_path.write_text(str(python_path), encoding="utf-8")
     except Exception as e:
-        logger.error('Failed to write "%s" to "%s" (%s).', sys.executable, str(save_path), e)
+        logger.error('Failed to write "%s" to "%s" (%s).', python_path, save_path, e)
         return -1
 
-    logger.debug('Wrote "%s" to "%s".', sys.executable, str(save_path))
-    logger.info("Please restart Ghidra for these changes to take effect.")
+    logger.debug('Wrote "%s" to "%s".', python_path, save_path)
+    logger.info(
+        'Ghidrathon has been configured to use the Python interpreter located at "%s". Please restart Ghidra for these changes to take effect.',
+        python_path,
+    )
 
     return 0
 
