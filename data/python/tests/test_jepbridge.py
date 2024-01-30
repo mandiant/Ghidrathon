@@ -59,7 +59,7 @@ class TestJepBridge(unittest.TestCase):
         self.assertIsNotJavaObject(currentProgram)
         self.assertIsNotJavaObject(currentLocation)
         self.assertIsNotJavaObject(currentHighlight)
-        self.assertIsJavaObject(currentSelection)
+        self.assertIsNotJavaObject(currentSelection)
 
     def test_ghidra_script_methods(self):
         self.assertIsInstance(getGhidraVersion(), str)
