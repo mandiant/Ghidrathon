@@ -73,5 +73,8 @@ jobs:
       run: python util/ghidrathon_configure.py ../tmp/ghidra/ghidra_PUBLIC -d
     - name: Run tests
       run: |
-        ../tmp/ghidra/ghidra_PUBLIC/support/analyzeHeadless ${{ github.workspace }}/../tmp/ghidra test -Import ${{ github.workspace }}/../tmp/ghidra/ghidra_PUBLIC/GPL/DemanglerGnu/os/linux_x86_64/demangler_gnu_v2_24 -PostScript ${{ github.workspace }}/data/python/tests/hello.py -PostScript ${{ github.workspace }}/data/python/tests/runall.py
+        ../tmp/ghidra/ghidra_PUBLIC/support/analyzeHeadless ${{ github.workspace }}/../tmp/ghidra test -Import ${{ github.workspace }}/../tmp/ghidra/ghidra_PUBLIC/GPL/DemanglerGnu/os/linux_x86_64/demangler_gnu_v2_24 -PostScript ${{ github.workspace }}/data/python/tests/hello.py -PostScript ${{ github.workspace }}/data/python/tests/runall.py > ../tmp/log.txt
+    - name: Check tests
+      run: |
+        python -c "import pathlib, sys;log_text=pathlib.Path('../tmp/log.txt').read_text(encoding='utf-8');print(log_text);sys.exit(0 if 'runall.py called exit with code -1' not in log_text else -1)"
         python -c "import pathlib, sys; sys.exit(0 if pathlib.Path('hello.txt').exists() else -1)"
