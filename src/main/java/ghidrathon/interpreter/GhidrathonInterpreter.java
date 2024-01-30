@@ -82,10 +82,7 @@ public class GhidrathonInterpreter {
     // we must configure Python sys module AFTER the first jep.SharedInterpreter is created
     if (jepPythonSysModuleInitialized.get() == false) {
       jep_.eval(
-          String.format(
-              "import"
-                  + " pathlib,sys;sys.executable=r\"%s\";sys._base_executable=str(pathlib.Path(r\"%s\").resolve(strict=False))",
-              this.pythonFile, this.pythonFile));
+          String.format("import sys;sys.executable=sys._base_executable=r\"%s\"", this.pythonFile));
       // site module configures other necessary sys vars, e.g. sys.prefix, using sys.executable
       jep_.eval("import site;site.main()");
       jep_.eval(
