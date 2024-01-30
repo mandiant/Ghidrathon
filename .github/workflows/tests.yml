@@ -73,6 +73,7 @@ jobs:
       run: python util/ghidrathon_configure.py ../tmp/ghidra/ghidra_PUBLIC -d
     - name: Run tests
       run: |
+        pip install packaging
         ../tmp/ghidra/ghidra_PUBLIC/support/analyzeHeadless ${{ github.workspace }}/../tmp/ghidra test -Import ${{ github.workspace }}/../tmp/ghidra/ghidra_PUBLIC/GPL/DemanglerGnu/os/linux_x86_64/demangler_gnu_v2_24 -PostScript ${{ github.workspace }}/data/python/tests/hello.py -PostScript ${{ github.workspace }}/data/python/tests/runall.py > ../tmp/log.txt
     - name: Check tests
       run: |
