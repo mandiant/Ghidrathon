@@ -16,6 +16,7 @@ Note: you must run this harness from the Ghidra script manager or headless mode
 
 import unittest
 import pathlib
+import sys
 
 
 def main():
@@ -24,8 +25,8 @@ def main():
     directory = str(pathlib.Path(__file__).resolve().parent)
 
     suite = loader.discover(directory, pattern="test_*.py")
-    _ = unittest.TextTestRunner(verbosity=2, failfast=True).run(suite)
+    return 0 if unittest.TextTestRunner(verbosity=2, failfast=True).run(suite).wasSuccessful() else -1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
