@@ -82,9 +82,9 @@ Tool | Version |Source |
 |---|---|---|
 | Ghidrathon | `>= 4.0.0` | https://github.com/mandiant/Ghidrathon/releases |
 | Python | `>= 3.8.0` | https://www.python.org/downloads |
-| Jep | `4.2.0` | https://github.com/ninia/jep/releases |
+| Jep | `== 4.2.0` | https://pypi.org/project/jep |
 | Ghidra | `>= 10.3.2` | https://github.com/NationalSecurityAgency/ghidra/releases |
-| Java | `>= 17.0.0` | https://adoptium.net/temurin/releases/ |
+| Java | `>= 17.0.0` | https://adoptium.net/temurin/releases |
 
 Use the following steps to install Ghidrathon to your Ghidra environment:
 
