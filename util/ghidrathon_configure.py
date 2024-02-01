@@ -33,7 +33,7 @@ def main(args):
     jep_spec = importlib.util.find_spec("jep")
     if jep_spec is None:
         logger.error(
-            "Jep is not installed. Please install Jep version %s before configuring Ghidrathon.", SUPPORTED_JEP_VERSION
+            "Jep is not installed. Please install Jep using the requirements.txt file before configuring Ghidrathon."
         )
         return -1
 
