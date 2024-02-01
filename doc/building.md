@@ -1,4 +1,4 @@
-# Building Ghidrathon
+# Building
 
 ## Requirements
 
