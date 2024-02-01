@@ -36,10 +36,10 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Configure temp folder
       run: mkdir ../tmp
-    - name: Install Python Jep
+    - name: Install Python requirements
       run: |
-        pip install numpy
-        pip install jep==4.2.0
+        pip install -r util/requirements.txt
+        pip install -r data/python/tests/requirements.txt
         python -c "import importlib.util;import pathlib;print(pathlib.Path(importlib.util.find_spec('jep').origin).parent)"
     - name: Download dependencies Linux/macOS
       if : ${{ matrix.os != 'windows-latest' }}
@@ -73,7 +73,6 @@ jobs:
       run: python util/ghidrathon_configure.py ../tmp/ghidra/ghidra_PUBLIC -d
     - name: Run tests
       run: |
-        pip install packaging
         ../tmp/ghidra/ghidra_PUBLIC/support/analyzeHeadless ${{ github.workspace }}/../tmp/ghidra test -Import ${{ github.workspace }}/../tmp/ghidra/ghidra_PUBLIC/GPL/DemanglerGnu/os/linux_x86_64/demangler_gnu_v2_24 -PostScript ${{ github.workspace }}/data/python/tests/hello.py -PostScript ${{ github.workspace }}/data/python/tests/runall.py > ../tmp/log.txt
     - name: Check tests
       run: |

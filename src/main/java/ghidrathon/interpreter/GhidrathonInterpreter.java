@@ -66,21 +66,28 @@ public class GhidrathonInterpreter {
 
     // we must configure jep.MainInterpreter once before creating our first jep.SharedInterpreter
     if (jepMainInterpreterInitialized.get() == false) {
+      Msg.info(GhidrathonInterpreter.class, "Configuring jep.MainInterpreter.");
+
       configureJepMainInterpreter();
       jepMainInterpreterInitialized.set(true);
     }
 
     // we must set JepConfig once before creating the first jep.SharedInterpreter
     if (jepConfigInitialized.get() == false) {
+      Msg.info(GhidrathonInterpreter.class, "Configuring jep.JepConfig.");
       setJepConfig();
       jepConfigInitialized.set(true);
     }
+
+    Msg.info(GhidrathonInterpreter.class, "Creating new jep.SharedInterpreter.");
 
     // create new Jep SharedInterpreter instance
     jep_ = new jep.SharedInterpreter();
 
     // we must configure Python sys module AFTER the first jep.SharedInterpreter is created
     if (jepPythonSysModuleInitialized.get() == false) {
+      Msg.info(GhidrathonInterpreter.class, "Configuring Python sys module.");
+
       jep_.eval(
           String.format("import sys;sys.executable=sys._base_executable=r\"%s\"", this.pythonFile));
       // site module configures other necessary sys vars, e.g. sys.prefix, using sys.executable
@@ -301,7 +308,7 @@ public class GhidrathonInterpreter {
 
       // we can't auto import the site module becuase we are running an embedded Python interpreter
       config.setNoSiteFlag(1);
-      config.setIgnoreEnvironmentFlag(1);
+      // config.setIgnoreEnvironmentFlag(1);
 
       MainInterpreter.setInitParams(config);
     } catch (IllegalStateException e) {
