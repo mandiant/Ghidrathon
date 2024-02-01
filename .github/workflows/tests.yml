@@ -33,7 +33,7 @@ jobs:
     - name: Lint with google-java-format
       run: |
         mkdir ../tmp
-        wget https://github.com/google/google-java-format/releases/download/v1.19.2/google-java-format-1.19.2.jar -O ../tmp/google-java-format.jar
+        wget https://github.com/google/google-java-format/releases/download/v1.19.2/google-java-format-1.19.2-all-deps.jar -O ../tmp/google-java-format.jar
         find . -name "*.java" -type f -print | xargs java -jar ../tmp/google-java-format.jar --dry-run --set-exit-if-changed
 
   tests:
