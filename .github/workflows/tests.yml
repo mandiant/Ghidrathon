@@ -8,9 +8,38 @@ on:
 
 jobs:
 
+  code_style:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Ghidrathon
+      uses: actions/checkout@v4
+    - name: Configure Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: "temurin"
+        java-version: "17"
+    - name: Configure Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: "3.12"
+    - name: Lint with isort
+      run: |
+        pip install isort
+        isort --profile black --length-sort --line-width 120 -c .
+    - name: Lint with black
+      run: |
+        pip install black
+        black -l 120 --check .
+    - name: Lint with google-java-format
+      run: |
+        mkdir ../tmp
+        wget https://github.com/google/google-java-format/releases/download/v1.19.2/google-java-format-1.19.2.jar -O ../tmp/google-java-format.jar
+        find . -name "*.java" -type f -print | xargs java -jar ../tmp/google-java-format.jar --dry-run --set-exit-if-changed
+
   tests:
     name: Tests in ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    needs: code_style
     strategy:
       fail-fast: false
       matrix:
