@@ -68,7 +68,7 @@ public class GhidrathonInterpreter {
     if (jepMainInterpreterInitialized.get() == false) {
       Msg.info(GhidrathonInterpreter.class, "Configuring jep.MainInterpreter.");
 
-              configureJepMainInterpreter();
+      configureJepMainInterpreter();
       jepMainInterpreterInitialized.set(true);
     }
 
