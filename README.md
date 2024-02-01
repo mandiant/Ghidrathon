@@ -7,11 +7,11 @@ Ghidrathon is a Ghidra extension that adds Python 3 scripting capabilities to Gh
 
 ![example](./data/ghidrathon_interp.png)
 
+Please see our Ghidra Python 3 script example [here](./ghidra_scripts/ghidrathon_example.py) for a closer look at writing Python 3 scripts for Ghidra.
+
 Check out:
 
 - The overview in our first [Ghidrathon blog post](https://www.mandiant.com/resources/blog/ghidrathon-snaking-ghidra-python-3-scripting)
-
-Please see our Ghidra Python 3 script example [here](./ghidra_scripts/ghidrathon_example.py) for a closer look at writing Python 3 scripts for Ghidra.
 
 ## Installing Ghidrathon
 
