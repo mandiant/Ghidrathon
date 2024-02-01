@@ -14,9 +14,9 @@
 Note: you must run this harness from the Ghidra script manager or headless mode
 """
 
-import unittest
-import pathlib
 import sys
+import pathlib
+import unittest
 
 
 def main():
