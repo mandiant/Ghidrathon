@@ -367,6 +367,12 @@ public class GhidrathonInterpreter {
       }
     }
 
+    /*
+     * This is hacky but we do not have a way to force Jep to use the Jep native
+     * that we have resolved without calling jep.MainInterpreter.setJepLibraryPath.
+     * This results in System.load(<jep_native>) twice which, according to the Java
+     * documentation is ok as the second load attempt is ignored.
+     */
     MainInterpreter.setJepLibraryPath(this.jepNativeFile.getAbsolutePath());
 
     // delay site module import
