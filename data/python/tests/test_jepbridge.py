@@ -29,8 +29,8 @@ class TestJepBridge(unittest.TestCase):
 
     def test_type_instance(self):
         # see Jep: https://github.com/ninia/jep/blob/15e36a7ba54eb7d8f7ffd85f16675fa4fd54eb1d/src/test/python/test_import.py#L54-L65
-        from java.lang import Object
         from java.io import Serializable
+        from java.lang import Object
         from java.util import Date
         from ghidra.program.database import ProgramDB
 

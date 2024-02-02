@@ -8,9 +8,38 @@ on:
 
 jobs:
 
+  code_style:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Ghidrathon
+      uses: actions/checkout@v4
+    - name: Configure Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: "temurin"
+        java-version: "17"
+    - name: Configure Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: "3.12"
+    - name: Lint with isort
+      run: |
+        pip install isort
+        isort --profile black --length-sort --line-width 120 -c .
+    - name: Lint with black
+      run: |
+        pip install black
+        black -l 120 --check .
+    - name: Lint with google-java-format
+      run: |
+        mkdir ../tmp
+        wget https://github.com/google/google-java-format/releases/download/v1.19.2/google-java-format-1.19.2-all-deps.jar -O ../tmp/google-java-format.jar
+        find . -name "*.java" -type f -print | xargs java -jar ../tmp/google-java-format.jar --dry-run --set-exit-if-changed
+
   tests:
     name: Tests in ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    needs: code_style
     strategy:
       fail-fast: false
       matrix:
@@ -36,10 +65,10 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Configure temp folder
       run: mkdir ../tmp
-    - name: Install Python Jep
+    - name: Install Python requirements
       run: |
-        pip install numpy
-        pip install jep==4.2.0
+        pip install -r util/requirements.txt
+        pip install -r data/python/tests/requirements.txt
         python -c "import importlib.util;import pathlib;print(pathlib.Path(importlib.util.find_spec('jep').origin).parent)"
     - name: Download dependencies Linux/macOS
       if : ${{ matrix.os != 'windows-latest' }}
@@ -73,7 +102,6 @@ jobs:
       run: python util/ghidrathon_configure.py ../tmp/ghidra/ghidra_PUBLIC -d
     - name: Run tests
       run: |
-        pip install packaging
         ../tmp/ghidra/ghidra_PUBLIC/support/analyzeHeadless ${{ github.workspace }}/../tmp/ghidra test -Import ${{ github.workspace }}/../tmp/ghidra/ghidra_PUBLIC/GPL/DemanglerGnu/os/linux_x86_64/demangler_gnu_v2_24 -PostScript ${{ github.workspace }}/data/python/tests/hello.py -PostScript ${{ github.workspace }}/data/python/tests/runall.py > ../tmp/log.txt
     - name: Check tests
       run: |

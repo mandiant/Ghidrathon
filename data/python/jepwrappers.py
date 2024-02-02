@@ -5,10 +5,10 @@
 # Unless required by applicable law or agreed to in writing, software distributed under the License
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
-import sys
-import abc
 import io
 import os
+import abc
+import sys
 
 import java.lang
 
@@ -107,20 +107,16 @@ def flatprogramapi_wrapper(api):
 
 class GhidrathonTextIOWrapperBase(abc.ABC):
     @abc.abstractproperty
-    def __stream__(self):
-        ...
+    def __stream__(self): ...
 
     @abc.abstractproperty
-    def name(self):
-        ...
+    def name(self): ...
 
     @abc.abstractproperty
-    def closed(self):
-        ...
+    def closed(self): ...
 
     @abc.abstractmethod
-    def fileno(self):
-        ...
+    def fileno(self): ...
 
     @property
     def line_buffering(self):

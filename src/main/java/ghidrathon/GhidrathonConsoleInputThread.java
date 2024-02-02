@@ -140,7 +140,8 @@ public class GhidrathonConsoleInputThread extends Thread {
     GhidrathonScript interactiveScript = plugin.getInteractiveScript();
     Program program = plugin.getCurrentProgram();
 
-    try (Transaction tx = program != null ? program.openTransaction("Ghidrathon console command") : null) {
+    try (Transaction tx =
+        program != null ? program.openTransaction("Ghidrathon console command") : null) {
 
       interactiveTaskMonitor.clearCanceled();
       interactiveScript.setSourceFile(new ResourceFile(new File("Ghidrathon")));
