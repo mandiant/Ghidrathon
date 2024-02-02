@@ -27,7 +27,7 @@ Tool | Version |Source |
 Use the following steps to install Ghidrathon to your Ghidra environment:
 
 1. Download and unzip the latest Ghidrathon [release](https://github.com/mandiant/Ghidrathon/releases)
-2. Execute the following commands using the Python interpreter that you'd like to use with Ghidrathon:
+2. Execute the following commands using the Python interpreter that you'd like to use with Ghidrathon ([requirements.txt](https://github.com/mandiant/Ghidrathon/blob/main/util/requirements.txt) and [ghidrathon_configure.py](https://github.com/mandiant/Ghidrathon/blob/main/util/ghidrathon_configure.py) are included in the release):
 ```
 $ python -m pip install -r requirements.txt
 $ python ghidrathon_configure.py <absolute_path_to_ghidra_install_dir>
@@ -47,11 +47,11 @@ $ python ghidrathon_configure.py <absolute_path_to_ghidra_install_dir>
 
 ### Switching Python Interpreters
 
-You can switch Ghidrathon to use a different Python interpreter by running `ghidrathon_configure.py` using the new Python interpreter.
+You can switch Ghidrathon to use a different Python interpreter by executing step `2` using the new Python interpreter.
 
 ### Using Python Virtual Environments
 
-Ghidrathon supports Python virtual environments. **To use a Python virtual environment, complete step `1` from within your virtual environment.** Do the same when running `ghidrathon_configure.py` to switch the Ghidrathon to use a different interpreter.
+You can use a Python virtual environment with Ghidrathon by executing step `2` from the virtual environment. To switch to a different virtual environment, simply execute step `2` from the new virtual environment.
 
 ## Using Ghidrathon
 
