@@ -10,6 +10,7 @@
 
 package ghidrathon.interpreter;
 
+import com.google.gson.*;
 import generic.jar.ResourceFile;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.script.GhidraScriptUtil;
@@ -22,6 +23,8 @@ import ghidrathon.GhidrathonUtils;
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import jep.Jep;
 import jep.JepConfig;
@@ -31,6 +34,11 @@ import jep.PyConfig;
 
 /** Utility class used to configure a Jep instance to access Ghidra */
 public class GhidrathonInterpreter {
+
+  private class GhidrathonSave {
+    String executable;
+    String home;
+  }
 
   private static final String GHIDRATHON_SAVE_FILENAME = "ghidrathon.save";
   private static final String SUPPORTED_JEP_VERSION = "4.2.0";
@@ -50,7 +58,8 @@ public class GhidrathonInterpreter {
 
   private static File jepPythonPackageDir = null;
   private static File jepNativeFile = null;
-  private static File pythonFile = null;
+  private static File pythonExecutableFile = null;
+  private static File pythonHomeDir = null;
 
   /**
    * Create and configure a new GhidrathonInterpreter instance.
@@ -89,7 +98,8 @@ public class GhidrathonInterpreter {
       Msg.info(GhidrathonInterpreter.class, "Configuring Python sys module.");
 
       jep_.eval(
-          String.format("import sys;sys.executable=sys._base_executable=r\"%s\"", this.pythonFile));
+          String.format(
+              "import sys;sys.executable=sys._base_executable=r\"%s\"", this.pythonExecutableFile));
       // site module configures other necessary sys vars, e.g. sys.prefix, using sys.executable
       jep_.eval("import site;site.main()");
       jep_.eval(
@@ -198,28 +208,61 @@ public class GhidrathonInterpreter {
         GhidrathonInterpreter.class,
         String.format("Using save file at %s.", ghidrathonSaveFile.getAbsolutePath()));
 
-    // read absolute path of Python interpreter from save file
+    GhidrathonSave ghidrathonSave = null;
     try (BufferedReader reader = new BufferedReader(new FileReader(ghidrathonSaveFile))) {
-      String pythonFilePath = reader.readLine().trim();
-      if (pythonFilePath != null && !pythonFilePath.isEmpty()) {
-        this.pythonFile = new File(pythonFilePath);
+      String json = reader.readLine().trim();
+      if (json != null && !json.isEmpty()) {
+        try {
+          ghidrathonSave = new Gson().fromJson(json, GhidrathonSave.class);
+        } catch (JsonSyntaxException e) {
+          throw new JepException(
+              String.format(
+                  "Failed to parse JSON from %s (%s). Please configure Ghidrathon before running"
+                      + " it.",
+                  ghidrathonSaveFile.getAbsolutePath(), e));
+        }
       }
     } catch (IOException e) {
       throw new JepException(
           String.format("Failed to read %s (%s)", ghidrathonSaveFile.getAbsolutePath(), e));
     }
 
-    // validate Python file path exists and is a file
-    if (this.pythonFile == null || !(this.pythonFile.exists() && this.pythonFile.isFile())) {
+    if (ghidrathonSave.home == null || ghidrathonSave.executable == null) {
       throw new JepException(
           String.format(
-              "Python path %s is not valid. Please configure Ghidrathon before running it.",
-              this.pythonFile.getAbsolutePath()));
+              "%s JSON is not valid. Please configure Ghidrathon before running it.",
+              ghidrathonSaveFile.getAbsolutePath()));
     }
 
     Msg.info(
         GhidrathonInterpreter.class,
-        String.format("Using Python interpreter at %s.", this.pythonFile.getAbsolutePath()));
+        String.format(
+            "ghidrathonSave.home = \"%s\", ghidrathonSave.executable = \"%s\"",
+            ghidrathonSave.home, ghidrathonSave.executable));
+
+    // validate Python home directory exists and is a directory
+    this.pythonHomeDir = new File(ghidrathonSave.home);
+    if (!(this.pythonHomeDir.exists() && this.pythonHomeDir.isDirectory())) {
+      throw new JepException(
+          String.format(
+              "Python home path %s is not valid. Please configure Ghidrathon before running it.",
+              this.pythonHomeDir.getAbsolutePath()));
+    }
+
+    // validate Python executable path exists and is a file
+    this.pythonExecutableFile = new File(ghidrathonSave.executable);
+    if (!(this.pythonExecutableFile.exists() && this.pythonExecutableFile.isFile())) {
+      throw new JepException(
+          String.format(
+              "Python executable path %s is not valid. Please configure Ghidrathon before running"
+                  + " it.",
+              this.pythonExecutableFile.getAbsolutePath()));
+    }
+
+    Msg.info(
+        GhidrathonInterpreter.class,
+        String.format(
+            "Using Python interpreter at %s.", this.pythonExecutableFile.getAbsolutePath()));
 
     String jepPythonPackagePath = findJepPackageDir();
     if (jepPythonPackagePath.isEmpty()) {
@@ -301,26 +344,42 @@ public class GhidrathonInterpreter {
         GhidrathonInterpreter.class,
         String.format("Using Jep version %s.", GhidrathonInterpreter.SUPPORTED_JEP_VERSION));
 
+    /*
+     * We need to ensure Jep nativate can link its dependencies, namely
+     * Python. This must be done before jep.MainInterpreter is initialized so we attempt
+     * to load Jep native here and resolve any linking issues. Linking issues are most common
+     * when a non-standard Python install is used.
+     */
     try {
-      MainInterpreter.setJepLibraryPath(this.jepNativeFile.getAbsolutePath());
+      System.load(this.jepNativeFile.getAbsolutePath());
+    } catch (UnsatisfiedLinkError e) {
+      Msg.info(
+          GhidrathonInterpreter.class,
+          String.format("Link error encountered when loading Jep native (%s)", e));
 
-      PyConfig config = new PyConfig();
-
-      // we can't auto import the site module becuase we are running an embedded Python interpreter
-      config.setNoSiteFlag(1);
-      // config.setIgnoreEnvironmentFlag(1);
-
-      MainInterpreter.setInitParams(config);
-    } catch (IllegalStateException e) {
-      e.printStackTrace(this.err);
-      throw new RuntimeException(e);
+      // https://github.com/ninia/jep/blob/dd2bf345392b1b66fd6c9aeb12c234a557690ba1/src/main/java/jep/LibraryLocator.java#L244
+      Matcher m = Pattern.compile("libpython[\\w\\.]*").matcher(e.getMessage());
+      if (!(m.find() && findPythonLibrary(m.group(0)))) {
+        if (!findPythonLibraryWindows()) {
+          // failed to resolve link error
+          throw new JepException(String.format("Failed to load native Jep (%s).", e));
+        }
+      }
     }
+
+    MainInterpreter.setJepLibraryPath(this.jepNativeFile.getAbsolutePath());
+
+    // delay site module import
+    PyConfig config = new PyConfig();
+    config.setNoSiteFlag(1);
+
+    MainInterpreter.setInitParams(config);
   }
 
   private String findJepPackageDir() {
     String output =
         execCmd(
-            this.pythonFile.getAbsolutePath(),
+            this.pythonExecutableFile.getAbsolutePath(),
             "-c",
             "import importlib.util;import"
                 + " pathlib;print(pathlib.Path(importlib.util.find_spec('jep').origin).parent)");
@@ -351,6 +410,52 @@ public class GhidrathonInterpreter {
     }
 
     return output;
+  }
+
+  /**
+   * Attempt to load libpython from within PYTHONHOME
+   *
+   * @param libraryName the full file name of libpython
+   * @return true if libpython was found and loaded.
+   */
+  private boolean findPythonLibrary(String libraryName) {
+    // https://github.com/ninia/jep/blob/dd2bf345392b1b66fd6c9aeb12c234a557690ba1/src/main/java/jep/LibraryLocator.java#L275
+    if (this.pythonHomeDir != null) {
+      for (String libDirName : new String[] {"lib", "lib64", "Lib"}) {
+        File libDir = new File(this.pythonHomeDir, libDirName);
+        if (!libDir.isDirectory()) {
+          continue;
+        }
+        File libraryFile = new File(libDir, libraryName);
+        if (libraryFile.exists()) {
+          System.load(libraryFile.getAbsolutePath());
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Attempt to load pythonXX.dll from within PYTHONHOME
+   *
+   * @return true if pythonXX.dll was found and loaded.
+   */
+  private boolean findPythonLibraryWindows() {
+    // https://github.com/ninia/jep/blob/dd2bf345392b1b66fd6c9aeb12c234a557690ba1/src/main/java/jep/LibraryLocator.java#L297
+    if (this.pythonHomeDir != null) {
+      Pattern re = Pattern.compile("^python\\d\\d+\\.dll$");
+      for (File file : this.pythonHomeDir.listFiles()) {
+        if (!file.isFile()) {
+          continue;
+        }
+        if (re.matcher(file.getName()).matches() && file.exists()) {
+          System.load(file.getAbsolutePath());
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   /**
