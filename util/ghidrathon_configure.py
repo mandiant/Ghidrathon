@@ -120,8 +120,7 @@ def main(args):
 
     logger.debug('Wrote "%s" to "%s".', json_, save_path)
     logger.info(
-        'Ghidrathon has been configured to use the Python interpreter located at "%s". Please restart Ghidra for these changes to take effect.',
-        python_path,
+        "Ghidrathon has been configured to use this Python interpreter. Please restart Ghidra for these changes to take effect."
     )
 
     return 0
