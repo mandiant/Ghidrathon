@@ -38,6 +38,8 @@ $ python ghidrathon_configure.py <absolute_path_to_ghidra_install_dir>
         * Click the green `+` button
         * Navigate to the Ghidrathon extension (`.zip`)
         * Click `Ok`
+        * Optional
+           * Select `Install Anyway` if prompted by `Extension Version Mismatch` window
     * Using a limited environment:
         * Extract the Ghidrathon extension (`.zip`)  to `<absolute_path_to_ghidra_install_dir>\Ghidra\Extensions`
 
