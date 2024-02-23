@@ -1,7 +1,7 @@
 # Ghidrathon
 
-![GitHub Release](https://img.shields.io/github/v/release/mandiant/ghidrathon)
-![GitHub Downloads (all assets, latest release)](https://img.shields.io/github/downloads/mandiant/ghidrathon/latest/total)
+[![GitHub Release](https://img.shields.io/github/v/release/mandiant/ghidrathon)](https://github.com/mandiant/Ghidrathon/releases)
+[![GitHub Downloads (all assets, latest release)](https://img.shields.io/github/downloads/mandiant/ghidrathon/latest/total)](https://github.com/mandiant/Ghidrathon/releases)
 [![CI](https://github.com/mandiant/ghidrathon/actions/workflows/tests.yml/badge.svg)](https://github.com/mandiant/ghidrathon/actions/workflows/tests.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)](LICENSE.txt)
 
