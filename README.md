@@ -1,7 +1,9 @@
 # Ghidrathon
 
-[![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)](LICENSE.txt)
+![GitHub Release](https://img.shields.io/github/v/release/mandiant/ghidrathon)
+![GitHub Downloads (all assets, latest release)](https://img.shields.io/github/downloads/mandiant/ghidrathon/latest/total)
 [![CI](https://github.com/mandiant/ghidrathon/actions/workflows/tests.yml/badge.svg)](https://github.com/mandiant/ghidrathon/actions/workflows/tests.yml)
+[![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)](LICENSE.txt)
 
 Ghidrathon is a Ghidra extension that adds Python 3 scripting capabilities to Ghidra. Why? Ghidra natively supports scripting in Java and Jython. Unfortunately, many open-source analysis tools, like [capa](https://github.com/mandiant/capa), [Unicorn Engine](https://github.com/unicorn-engine/unicorn), [angr](https://github.com/angr/angr), etc., are written in Python 3 making it difficult, and in some cases, impossible to use these tools in Ghidra. More so the security community has released several great plugins for other SRE frameworks like IDA Pro and Binary Ninja, but again, because many of these plugins use Python 3 it is difficult to port them to Ghidra. Ghidrathon helps you use existing and develop new Python 3 tooling in Ghidra and script Ghidra using modern Python in a way that tightly integrates with Ghidra's UI. It replaces the existing Python 2.7 extension implemented via Jython. This includes the interactive interpreter window, integration with the Ghidra Script Manager, and script execution in Ghidra headless mode.
 
