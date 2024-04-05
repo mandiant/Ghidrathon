@@ -34,6 +34,11 @@ Use the following steps to install Ghidrathon to your Ghidra environment:
 $ python -m pip install -r requirements.txt
 $ python ghidrathon_configure.py <absolute_path_to_ghidra_install_dir>
 ```
+**Note**: If you want to use a custom directory path for the ghidrathon.save file location, set the `GHIDRATHON_SAVE_PATH` environment variable before running ghidrathon_configure.py:
+```
+$ export GHIDRATHON_SAVE_PATH="/path/to/custom/dir" # Linux/MacOS
+$ set GHIDRATHON_SAVE_PATH="C:\path\to\custom\dir"  # Windows
+```
 **Note**: you may be prompted to set an environment variable named `JAVA_HOME`. This should reference the absolute path of the JDK that you have configured for your Ghidra install.
 
 3. Install the Ghidrathon extension (`.zip`) into Ghidra:
