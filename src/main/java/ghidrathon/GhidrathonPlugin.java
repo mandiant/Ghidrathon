@@ -34,7 +34,7 @@ import javax.swing.*;
 @PluginInfo(
     status = PluginStatus.STABLE,
     packageName = CorePluginPackage.NAME,
-    category = PluginCategoryNames.INTERPRETERS,
+    category = PluginCategoryNames.COMMON,
     shortDescription = "Python 3 Interpreter",
     description =
         "The FLARE team's open-source Python 3 interpreter console that is tightly integrated with"
