@@ -41,6 +41,7 @@ public class GhidrathonInterpreter {
   }
 
   private static final String GHIDRATHON_SAVE_FILENAME = "ghidrathon.save";
+  private static final String GHIDRATHON_SAVE_PATH = "GHIDRATHON_SAVE_PATH";
   private static final String SUPPORTED_JEP_VERSION = "4.2.0";
 
   private Jep jep_ = null;
@@ -193,10 +194,19 @@ public class GhidrathonInterpreter {
    */
   private void configureJepMainInterpreter() throws JepException, FileNotFoundException {
 
-    File ghidrathonSaveFile =
-        new File(
-            Application.getApplicationRootDirectory().getParentFile().getFile(false),
-            GhidrathonInterpreter.GHIDRATHON_SAVE_FILENAME);
+    // get the ghidrathon.save path from the environment variable or use the default path
+    String ghidrathonSavePath = System.getenv(GHIDRATHON_SAVE_PATH);
+    File ghidrathonSaveFile;
+
+    if (ghidrathonSavePath != null && !ghidrathonSavePath.isEmpty()) {
+      ghidrathonSaveFile = new File(ghidrathonSavePath, GHIDRATHON_SAVE_FILENAME);
+    } else {
+      ghidrathonSaveFile =
+          new File(
+              Application.getApplicationRootDirectory().getParentFile().getFile(false),
+              GHIDRATHON_SAVE_FILENAME);
+    }
+
     if (!(ghidrathonSaveFile.exists() && ghidrathonSaveFile.isFile())) {
       throw new JepException(
           String.format(

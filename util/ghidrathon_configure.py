@@ -18,7 +18,7 @@ from typing import Dict
 SUPPORTED_JEP_VERSION = "4.2.0"
 PYTHON_HOME_DIR_KEY = "home"
 PYTHON_EXECUTABLE_FILE_KEY = "executable"
-GHIDRATHON_SAVE_PATH =  "GHIDRATHON_SAVE_PATH"
+GHIDRATHON_SAVE_PATH = "GHIDRATHON_SAVE_PATH"
 
 logger = logging.getLogger(__name__)
 
@@ -136,7 +136,9 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "ghidrathon_install_directory", type=pathlib.Path, help="Absolute path of Ghidra install directory"
+        "ghidrathon_install_directory",
+        type=pathlib.Path,
+        help="Absolute path of Ghidra install directory",
     )
     parser.add_argument("-d", "--debug", action="store_true", help="Show debug messages")
 
