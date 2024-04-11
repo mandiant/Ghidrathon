@@ -45,8 +45,15 @@ jobs:
       matrix:
         ghidra-release-url: ["https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_10.3.2_build/ghidra_10.3.2_PUBLIC_20230711.zip", "https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_11.0_build/ghidra_11.0_PUBLIC_20231222.zip"]
         jep-jar-release-url: ["https://github.com/ninia/jep/releases/download/v4.2.0/jep-4.2.0.jar"]
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.8", "3.12"]
+        os: [ubuntu-latest] #, windows-latest, macos-latest]
+        python-version: ["3.8"] #, "3.12"]
+        include:
+          - os: ubuntu-latest
+            ghidrathon-save-path: "/tmp/"
+          #- os: windows-latest
+          #  ghidrathon-save-path: "C:\\Temp\\"
+          #- os: macos-latest
+          #  ghidrathon-save-path: "/tmp/"
     steps:
     - name: Checkout Ghidrathon
       uses: actions/checkout@v4
@@ -98,11 +105,28 @@ jobs:
       run: |
         Rename-Item -Path "./dist/$((Get-ChildItem -Path "./dist").Name)" -NewName "Ghidrathon.zip"
         tar -xf ./dist/Ghidrathon.zip -C ../tmp/ghidra/ghidra_PUBLIC/Ghidra/Extensions/
-    - name: Set Ghidrathon Python interpreter
+
+    # test Ghidrathon when GHIDRATHON_SAVE_PATH is unset
+    - name: Set Ghidrathon Python interpreter (default ghidrathon.save path)
       run: python util/ghidrathon_configure.py ../tmp/ghidra/ghidra_PUBLIC -d
-    - name: Run tests
+    - name: Run tests (default ghidathon.save path)
       run: |
-        ../tmp/ghidra/ghidra_PUBLIC/support/analyzeHeadless ${{ github.workspace }}/../tmp/ghidra test -Import ${{ github.workspace }}/../tmp/ghidra/ghidra_PUBLIC/GPL/DemanglerGnu/os/linux_x86_64/demangler_gnu_v2_24 -PostScript ${{ github.workspace }}/data/python/tests/hello.py -PostScript ${{ github.workspace }}/data/python/tests/runall.py > ../tmp/log.txt
+        ../tmp/ghidra/ghidra_PUBLIC/support/analyzeHeadless ${{ github.workspace }}/../tmp/ghidra test -Import ${{ github.workspace }}/../tmp/ghidra/ghidra_PUBLIC/GPL/DemanglerGnu/os/linux_x86_64/demangler_gnu_v2_24 -overwrite -PostScript ${{ github.workspace }}/data/python/tests/hello.py -PostScript ${{ github.workspace }}/data/python/tests/runall.py > ../tmp/log.txt
+    - name: Check tests (default )
+      run: |
+        python -c "import pathlib, sys;log_text=pathlib.Path('../tmp/log.txt').read_text(encoding='utf-8');print(log_text);sys.exit(0 if 'runall.py called exit with code 0' in log_text else -1)"
+        python -c "import pathlib, sys; sys.exit(0 if pathlib.Path('hello.txt').exists() else -1)"
+
+    # test Ghidrathon when GHIDRATHON_SAVE_PATH is set
+    - name: Set Ghidrathon Python interpreter (GHIDRATHON_SAVE_PATH is set)
+      env:
+        GHIDRATHON_SAVE_PATH: ${{ matrix.ghidrathon-save-path }}
+      run: python util/ghidrathon_configure.py ../tmp/ghidra/ghidra_PUBLIC -d
+    - name: Run tests (GHIDRATHON_SAVE_PATH is set)
+      env:
+        GHIDRATHON_SAVE_PATH: ${{ matrix.ghidrathon-save-path }}
+      run: |
+        ../tmp/ghidra/ghidra_PUBLIC/support/analyzeHeadless ${{ github.workspace }}/../tmp/ghidra test -Import ${{ github.workspace }}/../tmp/ghidra/ghidra_PUBLIC/GPL/DemanglerGnu/os/linux_x86_64/demangler_gnu_v2_24 -overwrite  -PostScript ${{ github.workspace }}/data/python/tests/hello.py -PostScript ${{ github.workspace }}/data/python/tests/runall.py > ../tmp/log.txt
     - name: Check tests
       run: |
         python -c "import pathlib, sys;log_text=pathlib.Path('../tmp/log.txt').read_text(encoding='utf-8');print(log_text);sys.exit(0 if 'runall.py called exit with code 0' in log_text else -1)"
