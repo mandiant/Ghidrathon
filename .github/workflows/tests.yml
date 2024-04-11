@@ -45,15 +45,15 @@ jobs:
       matrix:
         ghidra-release-url: ["https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_10.3.2_build/ghidra_10.3.2_PUBLIC_20230711.zip", "https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_11.0_build/ghidra_11.0_PUBLIC_20231222.zip"]
         jep-jar-release-url: ["https://github.com/ninia/jep/releases/download/v4.2.0/jep-4.2.0.jar"]
-        os: [ubuntu-latest] #, windows-latest, macos-latest]
-        python-version: ["3.8"] #, "3.12"]
+        os: [ubuntu-latest , windows-latest, macos-latest]
+        python-version: ["3.8" , "3.12"]
         include:
           - os: ubuntu-latest
             ghidrathon-save-path: "/tmp/"
-          #- os: windows-latest
-          #  ghidrathon-save-path: "C:\\Temp\\"
-          #- os: macos-latest
-          #  ghidrathon-save-path: "/tmp/"
+          - os: windows-latest
+            ghidrathon-save-path: "C:\\Temp\\"
+          - os: macos-latest
+            ghidrathon-save-path: "/tmp/"
     steps:
     - name: Checkout Ghidrathon
       uses: actions/checkout@v4
