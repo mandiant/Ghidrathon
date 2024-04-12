@@ -81,4 +81,23 @@ def jepeval(line):
 
         traceback.print_exc()
 
+        def log_env_details():
+            import platform
+
+            import jep
+            from java.lang import System
+
+            print(
+                "Python={python_version}, Arch={arch}, OS={os}, Ghidra={ghidra_version}, Java={java_version}, Ghidrathon=4.0.0, Jep={jep_version}".format(
+                    python_version=platform.python_version(),
+                    arch=System.getProperty("os.arch"),
+                    os=System.getProperty("os.name"),
+                    ghidra_version=getGhidraVersion(),
+                    java_version=System.getProperty("java.version"),
+                    jep_version=jep.__version__,
+                )
+            )
+
+        log_env_details()
+
     return more_input_needed
