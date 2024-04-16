@@ -111,6 +111,7 @@ jobs:
       run: python util/ghidrathon_configure.py ../tmp/ghidra/ghidra_PUBLIC -d
     - name: Run tests (GHIDRATHON_SAVE_PATH is unset)
       run: |
+        # the -overwrite flag ensures that an existing project file that conflicts with an import file is overwritten
         ../tmp/ghidra/ghidra_PUBLIC/support/analyzeHeadless ${{ github.workspace }}/../tmp/ghidra test -Import ${{ github.workspace }}/../tmp/ghidra/ghidra_PUBLIC/GPL/DemanglerGnu/os/linux_x86_64/demangler_gnu_v2_24 -overwrite -PostScript ${{ github.workspace }}/data/python/tests/hello.py -PostScript ${{ github.workspace }}/data/python/tests/runall.py > ../tmp/log.txt
     - name: Check tests (GHIDRATHON_SAVE_PATH is unset)
       run: |
@@ -126,6 +127,7 @@ jobs:
       env:
         GHIDRATHON_SAVE_PATH: ${{ matrix.ghidrathon-save-path }}
       run: |
+        # the -overwrite flag ensures that an existing project file that conflicts with an import file is overwritten
         ../tmp/ghidra/ghidra_PUBLIC/support/analyzeHeadless ${{ github.workspace }}/../tmp/ghidra test -Import ${{ github.workspace }}/../tmp/ghidra/ghidra_PUBLIC/GPL/DemanglerGnu/os/linux_x86_64/demangler_gnu_v2_24 -overwrite  -PostScript ${{ github.workspace }}/data/python/tests/hello.py -PostScript ${{ github.workspace }}/data/python/tests/runall.py > ../tmp/log.txt
     - name: Check tests (GHIDRATHON_SAVE_PATH is set)
       run: |
