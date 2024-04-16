@@ -93,7 +93,7 @@ def main(args):
     logger.debug('Using Python home located at "%s".', home_path)
 
     json_: str = json.dumps(ghidrathon_save)
-    save_path: pathlib.Path = pathlib.Path(os.environ.get(GHIDRATHON_SAVE_PATH, install_path)) / "ghidrathon.save"
+    save_path: pathlib.Path = pathlib.Path(os.environ.get(GHIDRATHON_SAVE_PATH) or install_path) / "ghidrathon.save"
     logger.debug('Using ghidrathon.save path: "%s"' % save_path)
     try:
         save_path.write_text(json_, encoding="utf-8")
