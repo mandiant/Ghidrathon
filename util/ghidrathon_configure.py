@@ -93,7 +93,21 @@ def main(args):
     logger.debug('Using Python home located at "%s".', home_path)
 
     json_: str = json.dumps(ghidrathon_save)
-    save_path: pathlib.Path = pathlib.Path(os.environ.get(GHIDRATHON_SAVE_PATH) or install_path) / "ghidrathon.save"
+    ghidrathon_save_path_env = os.environ.get(GHIDRATHON_SAVE_PATH)
+
+    if ghidrathon_save_path_env:
+        save_path: pathlib.Path = pathlib.Path(ghidrathon_save_path_env)
+        if not all((save_path.exists(), save_path.is_dir())):
+            logger.error(
+                'The path specified by the "%s" environment variable "%s" is not a valid directory.',
+                GHIDRATHON_SAVE_PATH,
+                ghidrathon_save_path_env,
+            )
+            return -1
+    else:
+        save_path: pathlib.Path = install_path
+
+    save_path = save_path / "ghidrathon.save"
     logger.debug('Using ghidrathon.save path: "%s"' % save_path)
     try:
         save_path.write_text(json_, encoding="utf-8")
