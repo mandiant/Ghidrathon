@@ -46,6 +46,8 @@ import javax.swing.*;
 public class GhidrathonPlugin extends ProgramPlugin
     implements InterpreterConnection, OptionsChangeListener {
 
+  private static final String VERSION = "4.0.0";
+
   private InterpreterConsole console;
   private GhidrathonConsoleInputThread inputThread;
   private TaskMonitor interactiveTaskMonitor;
@@ -69,6 +71,10 @@ public class GhidrathonPlugin extends ProgramPlugin
   GhidrathonScript getInteractiveScript() {
 
     return interactiveScript;
+  }
+
+  public String getVersion() {
+    return VERSION;
   }
 
   @Override
