@@ -36,4 +36,7 @@ def jep_runscript(path):
         # messages in the Ghidra console window
         import traceback
 
+        import utils
+
         traceback.print_exc()
+        utils.log_env_details(type(err))
