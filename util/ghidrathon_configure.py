@@ -97,7 +97,7 @@ def main(args):
 
     if ghidrathon_save_path_env:
         save_path: pathlib.Path = pathlib.Path(ghidrathon_save_path_env)
-        if not all((save_path.exists(), save_path.is_dir())):
+        if not all((ghidrathon_save_path_env != "", save_path.exists(), save_path.is_dir())):
             logger.error(
                 'The path specified by the "%s" environment variable "%s" is not a valid directory.',
                 GHIDRATHON_SAVE_PATH,
