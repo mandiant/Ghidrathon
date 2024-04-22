@@ -70,7 +70,9 @@ def main(args):
 
     ghidrathon_save: Dict[str, str] = {}
 
-    python_path: pathlib.Path = pathlib.Path("None" if not sys.executable else sys.executable)
+    python_path: pathlib.Path = pathlib.Path(
+        "None" if not sys.executable else sys.executable
+    )
     if not all((python_path.exists(), python_path.is_file())):
         logger.error(
             'sys.executable value "%s" is not valid. Please verify your Python environment is correct before configuring Ghidrathon.',
@@ -81,7 +83,9 @@ def main(args):
     ghidrathon_save[PYTHON_EXECUTABLE_FILE_KEY] = str(python_path)
     logger.debug('Using Python interpreter located at "%s".', python_path)
 
-    home_path: pathlib.Path = pathlib.Path("None" if not sys.base_prefix else sys.base_prefix)
+    home_path: pathlib.Path = pathlib.Path(
+        "None" if not sys.base_prefix else sys.base_prefix
+    )
     if not all((home_path.exists(), home_path.is_dir())):
         logger.error(
             'sys.base_prefix value "%s" is not valid. Please verify your Python environment is correct before configuring Ghidrathon.',
@@ -97,13 +101,20 @@ def main(args):
 
     if ghidrathon_save_path_env:
         save_path: pathlib.Path = pathlib.Path(ghidrathon_save_path_env)
-        if not all((ghidrathon_save_path_env != "", save_path.exists(), save_path.is_dir())):
+        if not all((save_path.exists(), save_path.is_dir())):
             logger.error(
                 'The path specified by the "%s" environment variable "%s" is not a valid directory.',
                 GHIDRATHON_SAVE_PATH,
                 ghidrathon_save_path_env,
             )
             return -1
+    elif ghidrathon_save_path_env == "":
+        logger.error(
+            'The path specified by the "%s" environment variable "%s" is not a valid directory.',
+            GHIDRATHON_SAVE_PATH,
+            ghidrathon_save_path_env,
+        )
+        return -1
     else:
         save_path: pathlib.Path = install_path
 
@@ -154,6 +165,8 @@ if __name__ == "__main__":
         type=pathlib.Path,
         help="Absolute path of Ghidra install directory",
     )
-    parser.add_argument("-d", "--debug", action="store_true", help="Show debug messages")
+    parser.add_argument(
+        "-d", "--debug", action="store_true", help="Show debug messages"
+    )
 
     sys.exit(main(parser.parse_args()))
