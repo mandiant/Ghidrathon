@@ -70,9 +70,7 @@ def main(args):
 
     ghidrathon_save: Dict[str, str] = {}
 
-    python_path: pathlib.Path = pathlib.Path(
-        "None" if not sys.executable else sys.executable
-    )
+    python_path: pathlib.Path = pathlib.Path("None" if not sys.executable else sys.executable)
     if not all((python_path.exists(), python_path.is_file())):
         logger.error(
             'sys.executable value "%s" is not valid. Please verify your Python environment is correct before configuring Ghidrathon.',
@@ -83,9 +81,7 @@ def main(args):
     ghidrathon_save[PYTHON_EXECUTABLE_FILE_KEY] = str(python_path)
     logger.debug('Using Python interpreter located at "%s".', python_path)
 
-    home_path: pathlib.Path = pathlib.Path(
-        "None" if not sys.base_prefix else sys.base_prefix
-    )
+    home_path: pathlib.Path = pathlib.Path("None" if not sys.base_prefix else sys.base_prefix)
     if not all((home_path.exists(), home_path.is_dir())):
         logger.error(
             'sys.base_prefix value "%s" is not valid. Please verify your Python environment is correct before configuring Ghidrathon.',
@@ -165,8 +161,6 @@ if __name__ == "__main__":
         type=pathlib.Path,
         help="Absolute path of Ghidra install directory",
     )
-    parser.add_argument(
-        "-d", "--debug", action="store_true", help="Show debug messages"
-    )
+    parser.add_argument("-d", "--debug", action="store_true", help="Show debug messages")
 
     sys.exit(main(parser.parse_args()))
