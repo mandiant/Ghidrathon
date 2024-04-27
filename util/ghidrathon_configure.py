@@ -19,6 +19,7 @@ SUPPORTED_JEP_VERSION = "4.2.0"
 PYTHON_HOME_DIR_KEY = "home"
 PYTHON_EXECUTABLE_FILE_KEY = "executable"
 GHIDRATHON_SAVE_PATH = "GHIDRATHON_SAVE_PATH"
+GHIDRATHON_SAVE_FILENAME = "ghidrathon.save"
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +96,14 @@ def main(args):
     json_: str = json.dumps(ghidrathon_save)
     ghidrathon_save_path_env = os.environ.get(GHIDRATHON_SAVE_PATH)
 
-    if ghidrathon_save_path_env:
+    if ghidrathon_save_path_env == "":
+        logger.error(
+            'The path specified by the "%s" environment variable "%s" is not a valid directory.',
+            GHIDRATHON_SAVE_PATH,
+            ghidrathon_save_path_env,
+        )
+        return -1
+    elif ghidrathon_save_path_env:
         save_path: pathlib.Path = pathlib.Path(ghidrathon_save_path_env)
         if not all((save_path.exists(), save_path.is_dir())):
             logger.error(
@@ -104,18 +112,16 @@ def main(args):
                 ghidrathon_save_path_env,
             )
             return -1
-    elif ghidrathon_save_path_env == "":
-        logger.error(
-            'The path specified by the "%s" environment variable "%s" is not a valid directory.',
+        save_path = save_path / GHIDRATHON_SAVE_FILENAME
+        logger.debug(
+            'Using save file path from environment variable "%s": "%s"',
             GHIDRATHON_SAVE_PATH,
-            ghidrathon_save_path_env,
+            save_path,
         )
-        return -1
     else:
-        save_path: pathlib.Path = install_path
+        save_path: pathlib.Path = install_path / GHIDRATHON_SAVE_FILENAME
+        logger.debug('Using default save file path "%s"', save_path)
 
-    save_path = save_path / "ghidrathon.save"
-    logger.debug('Using ghidrathon.save path: "%s"' % save_path)
     try:
         save_path.write_text(json_, encoding="utf-8")
     except Exception as e:

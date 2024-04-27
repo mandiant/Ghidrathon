@@ -200,11 +200,15 @@ public class GhidrathonInterpreter {
 
     if (ghidrathonSavePath != null && !ghidrathonSavePath.isEmpty()) {
       ghidrathonSaveFile = new File(ghidrathonSavePath, GHIDRATHON_SAVE_FILENAME);
+      Msg.info(
+          GhidrathonInterpreter.class,
+          String.format("Using save file from environment variable %s.", GHIDRATHON_SAVE_PATH));
     } else {
       ghidrathonSaveFile =
           new File(
               Application.getApplicationRootDirectory().getParentFile().getFile(false),
               GHIDRATHON_SAVE_FILENAME);
+      Msg.info(GhidrathonInterpreter.class, String.format("Using default save file path."));
     }
 
     if (!(ghidrathonSaveFile.exists() && ghidrathonSaveFile.isFile())) {
@@ -216,7 +220,7 @@ public class GhidrathonInterpreter {
 
     Msg.info(
         GhidrathonInterpreter.class,
-        String.format("Using save file at %s.", ghidrathonSaveFile.getAbsolutePath()));
+        String.format("Using save file found at %s.", ghidrathonSaveFile.getAbsolutePath()));
 
     GhidrathonSave ghidrathonSave = null;
     try (BufferedReader reader = new BufferedReader(new FileReader(ghidrathonSaveFile))) {
