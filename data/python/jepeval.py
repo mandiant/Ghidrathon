@@ -79,9 +79,9 @@ def jepeval(line):
         # in the Ghidra console window
         import traceback
 
-        import utils
+        import jeputils
 
         traceback.print_exc()
-        utils.log_env_details(type(err))
+        jeputils.log_env_details(type(err))
 
     return more_input_needed

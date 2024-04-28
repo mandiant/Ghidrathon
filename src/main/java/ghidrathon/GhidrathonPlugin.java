@@ -73,7 +73,7 @@ public class GhidrathonPlugin extends ProgramPlugin
     return interactiveScript;
   }
 
-  public String getVersion() {
+  public static String getVersion() {
     return VERSION;
   }
 
