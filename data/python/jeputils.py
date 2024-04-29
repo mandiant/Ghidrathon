@@ -5,11 +5,12 @@ import jep
 import ghidrathon
 from java.lang import System
 
-ALLOWED_EXCEPTIONS = [RuntimeError, OSError]
+ALLOWED_EXCEPTIONS = (RuntimeError, OSError)
 
 
-def log_env_details(exc_type):
-    if any(issubclass(exc_type, exc_class) for exc_class in ALLOWED_EXCEPTIONS):
+def log_env_details(exc):
+    exc_type = type(exc)
+    if issubclass(exc_type, ALLOWED_EXCEPTIONS):
         print(
             f"Python={platform.python_version()}, "
             f"Arch={System.getProperty('os.arch')}, "

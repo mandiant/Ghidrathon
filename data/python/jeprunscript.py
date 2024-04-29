@@ -39,4 +39,4 @@ def jep_runscript(path):
         import jeputils
 
         traceback.print_exc()
-        jeputils.log_env_details(type(err))
+        jeputils.log_env_details(err)

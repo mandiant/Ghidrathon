@@ -82,6 +82,6 @@ def jepeval(line):
         import jeputils
 
         traceback.print_exc()
-        jeputils.log_env_details(type(err))
+        jeputils.log_env_details(err)
 
     return more_input_needed
