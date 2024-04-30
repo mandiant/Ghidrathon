@@ -6,6 +6,7 @@
 #  is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and limitations under the License.
 
+import os
 import sys
 import json
 import logging
@@ -17,6 +18,8 @@ from typing import Dict
 SUPPORTED_JEP_VERSION = "4.2.0"
 PYTHON_HOME_DIR_KEY = "home"
 PYTHON_EXECUTABLE_FILE_KEY = "executable"
+GHIDRATHON_SAVE_PATH = "GHIDRATHON_SAVE_PATH"
+GHIDRATHON_SAVE_FILENAME = "ghidrathon.save"
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +94,34 @@ def main(args):
     logger.debug('Using Python home located at "%s".', home_path)
 
     json_: str = json.dumps(ghidrathon_save)
-    save_path: pathlib.Path = install_path / "ghidrathon.save"
+    ghidrathon_save_path_env = os.environ.get(GHIDRATHON_SAVE_PATH)
+
+    if ghidrathon_save_path_env == "":
+        logger.error(
+            'The path specified by the "%s" environment variable "%s" is not a valid directory.',
+            GHIDRATHON_SAVE_PATH,
+            ghidrathon_save_path_env,
+        )
+        return -1
+    elif ghidrathon_save_path_env:
+        save_path: pathlib.Path = pathlib.Path(ghidrathon_save_path_env)
+        if not all((save_path.exists(), save_path.is_dir())):
+            logger.error(
+                'The path specified by the "%s" environment variable "%s" is not a valid directory.',
+                GHIDRATHON_SAVE_PATH,
+                ghidrathon_save_path_env,
+            )
+            return -1
+        save_path = save_path / GHIDRATHON_SAVE_FILENAME
+        logger.debug(
+            'Using save file path from environment variable "%s": "%s"',
+            GHIDRATHON_SAVE_PATH,
+            save_path,
+        )
+    else:
+        save_path: pathlib.Path = install_path / GHIDRATHON_SAVE_FILENAME
+        logger.debug('Using default save file path "%s"', save_path)
+
     try:
         save_path.write_text(json_, encoding="utf-8")
     except Exception as e:
@@ -133,7 +163,9 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "ghidrathon_install_directory", type=pathlib.Path, help="Absolute path of Ghidra install directory"
+        "ghidrathon_install_directory",
+        type=pathlib.Path,
+        help="Absolute path of Ghidra install directory",
     )
     parser.add_argument("-d", "--debug", action="store_true", help="Show debug messages")
 
